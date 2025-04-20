@@ -1,6 +1,10 @@
 use tree_sitter::Parser;
 
-pub fn parse_sql(sql: &str) {
+pub struct SqlMetadata {
+    pub name: String,
+}
+
+pub fn parse_sql(sql: &str) -> SqlMetadata {
     let mut parser = Parser::new();
     parser
         .set_language(&tree_sitter_sql::LANGUAGE.into())
@@ -8,6 +12,9 @@ pub fn parse_sql(sql: &str) {
     let tree = parser.parse(sql, None).unwrap();
     let root_node = tree.root_node();
     println!("{:?}", root_node);
+    return SqlMetadata {
+        name: "test".to_string(),
+    };
 }
 
 #[cfg(test)]

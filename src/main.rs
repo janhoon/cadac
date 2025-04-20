@@ -1,5 +1,5 @@
-use cadac::print_my_name;
+use cadac::exec_cadac;
 
 fn main() {
-    print_my_name();
+    exec_cadac();
 }
