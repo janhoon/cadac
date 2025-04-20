@@ -4,3 +4,11 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+color-eyre = "0.6.3"
+crossterm = "0.29.0"
+ratatui = "0.29.0"
+tree-sitter = "0.25.3"
+tree-sitter-sql = { git = "https://github.com/janhoon/tree-sitter-sql" }
+
+[build-dependencies]
+cc="*"

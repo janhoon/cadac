@@ -1,4 +1,8 @@
+mod parser;
+
+use parser::parse_sql;
+
 pub fn print_my_name() {
-    println!("My name is John Doe");
+    parse_sql("SELECT a, b, c FROM users");
 }
 
