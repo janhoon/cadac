@@ -9,7 +9,7 @@ color-eyre = "0.6.3"
 crossterm = "0.29.0"
 ratatui = "0.29.0"
 tree-sitter = "0.25.3"
-tree-sitter-sql = { git = "https://github.com/janhoon/tree-sitter-sql" }
+tree-sitter-sql = { git = "https://github.com/janhoon/tree-sitter-sql",rev = "bb0d0d255f55dbaf01df64effa9b2bc900f5bfd2" }
 
 [build-dependencies]
 cc="*"

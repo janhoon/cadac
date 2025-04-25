@@ -959,7 +959,7 @@ checksum = "c4013970217383f67b18aef68f6fb2e8d409bc5755227092d32efb0422ba24b8"
 [[package]]
 name = "tree-sitter-sql"
 version = "0.1.0"
-source = "git+https://github.com/janhoon/tree-sitter-sql#cae513b8d696ffad90d63fc5e42ff54c9ad55de3"
+source = "git+https://github.com/janhoon/tree-sitter-sql?rev=bb0d0d255f55dbaf01df64effa9b2bc900f5bfd2#bb0d0d255f55dbaf01df64effa9b2bc900f5bfd2"
 dependencies = [
  "cc",
  "tree-sitter-language",
