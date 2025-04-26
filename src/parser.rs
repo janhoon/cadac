@@ -1,7 +1,7 @@
 use tree_sitter::Parser;
 
 const NODE_KIND_SOURCE_FILE: &str = "source_file";
-const NODE_KINE_SELECT_STATEMENT: &str = "select_statement";
+const NODE_KIND_SELECT_STATEMENT: &str = "select_statement";
 
 #[derive(Debug, PartialEq)]
 pub enum ModelParseError {
@@ -44,10 +44,6 @@ pub struct ModelMetadata {
     pub sources: Vec<Source>,
 }
 
-trait ParseTreeSitter {
-    fn parse_root_node(&self, node: tree_sitter::Node) -> Result<ModelMetadata, ModelParseError>;
-}
-
 pub trait ParseModel {
     fn parse_model(&mut self, sql: &str) -> Result<&Self, ModelParseError>;
 }
@@ -64,6 +60,7 @@ impl ModelMetadata {
 }
 
 impl ParseModel for ModelMetadata {
+    /// Parse the SQL string and extract the model metadata.
     fn parse_model(&mut self, sql: &str) -> Result<&Self, ModelParseError> {
         let mut parser = Parser::new();
         parser
@@ -80,14 +77,16 @@ impl ParseModel for ModelMetadata {
     }
 }
 
-impl ParseTreeSitter for ModelMetadata {
+impl ModelMetadata {
+    /// Parse the root node of the tree and extract the select statement
+    /// while making sure there is only one statement.
     fn parse_root_node(&self, node: tree_sitter::Node) -> Result<ModelMetadata, ModelParseError> {
         assert_eq!(node.kind(), NODE_KIND_SOURCE_FILE);
 
         let mut statement_nodes = vec![];
         for i in 0..node.child_count() {
             let child = node.child(i).unwrap();
-            if child.kind() == NODE_KINE_SELECT_STATEMENT {
+            if child.kind() == NODE_KIND_SELECT_STATEMENT {
                 statement_nodes.push(child);
             }
         }
@@ -106,8 +105,7 @@ impl ParseTreeSitter for ModelMetadata {
             ));
         }
 
-        // Use the first statement node
-        let _statements = statement_nodes[0];
+        let statement = statement_nodes[0];
 
         return Ok(ModelMetadata {
             name: self.name.clone(),
@@ -115,6 +113,74 @@ impl ParseTreeSitter for ModelMetadata {
             columns: vec![],
             sources: vec![],
         });
+    }
+
+    /*
+    Select statement example:
+
+    -- comment
+
+    -- comment
+    -- comment
+    select
+    col1 as col1_alias, -- col1 description
+    col2,
+    -- col3 description
+    col3 -- col3 description
+    from db.schema.table1 AS t;
+
+    Tree sitter tree:
+
+    (source_file [0, 0] - [11, 0]
+        (select_statement [0, 0] - [9, 26]
+            (comment [0, 0] - [0, 10]
+            (COMMENT [0, 0] - [0, 2])
+            (comment_text [0, 2] - [0, 10]))
+            (comment [2, 0] - [2, 10]
+            (COMMENT [2, 0] - [2, 2])
+            (comment_text [2, 2] - [2, 10]))
+            (comment [3, 0] - [3, 10]
+            (COMMENT [3, 0] - [3, 2])
+            (comment_text [3, 2] - [3, 10]))
+            (SELECT [4, 0] - [4, 6])
+            (select_list [5, 0] - [9, 0]
+            (select_list_item_with_separator [5, 0] - [6, 0]
+                expression: (column_reference [5, 0] - [5, 4]
+                column_ref: (reference [5, 0] - [5, 4]))
+                (AS [5, 5] - [5, 7])
+                alias: (reference [5, 8] - [5, 18])
+                inline_comment: (comment [5, 20] - [5, 39]
+                (COMMENT [5, 20] - [5, 22])
+                (comment_text [5, 22] - [5, 39])))
+            (select_list_item_with_separator [6, 0] - [7, 0]
+                expression: (column_reference [6, 0] - [6, 4]
+                column_ref: (reference [6, 0] - [6, 4])))
+            (select_list_item [7, 0] - [9, 0]
+                comment: (comment [7, 0] - [7, 19]
+                (COMMENT [7, 0] - [7, 2])
+                (comment_text [7, 2] - [7, 19]))
+                expression: (column_reference [8, 0] - [8, 4]
+                column_ref: (reference [8, 0] - [8, 4]))
+                inline_comment: (comment [8, 5] - [8, 24]
+                (COMMENT [8, 5] - [8, 7])
+                (comment_text [8, 7] - [8, 24]))))
+            (from_clause [9, 0] - [9, 26]
+            (FROM [9, 0] - [9, 4])
+            (object_reference [9, 5] - [9, 26]
+                (table_reference [9, 5] - [9, 26]
+                database: (reference [9, 5] - [9, 7])
+                schema: (reference [9, 8] - [9, 14])
+                name: (reference [9, 15] - [9, 21])
+                (AS [9, 22] - [9, 24])
+                alias: (reference [9, 25] - [9, 26]))))))
+    */
+
+    /// Parse a select statement node
+    /// and extract the columns and their descriptions.
+    fn parse_select_statement(
+        &self,
+        node: tree_sitter::Node,
+    ) -> Result<ModelMetadata, ModelParseError> {
     }
 }
 
@@ -136,10 +202,11 @@ mod tests {
         match result {
             Ok(model) => {
                 assert_eq!(model.name, "users");
-                assert_eq!(*model, 
+                assert_eq!(
+                    *model,
                     ModelMetadata {
                         name: "users".to_string(),
-                        description: None,
+                        description: Some("this it the model description".to_string()),
                         columns: vec![
                             Column {
                                 name: "a".to_string(),
@@ -148,13 +215,13 @@ mod tests {
                                 sources: vec![],
                             },
                             Column {
-                                name: "b".to_string(),
+                                name: "test".to_string(),
                                 description: Some("test".to_string()),
                                 data_type: None,
                                 sources: vec![],
                             },
                             Column {
-                                name: "c()".to_string(),
+                                name: "test2".to_string(),
                                 description: Some("test2".to_string()),
                                 data_type: None,
                                 sources: vec![],
