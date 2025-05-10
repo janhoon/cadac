@@ -119,7 +119,7 @@ dependencies = [
  "crossterm 0.29.0",
  "ratatui",
  "tree-sitter",
- "tree-sitter-sql",
+ "tree-sitter-sql-cadac",
 ]
 
 [[package]]
@@ -957,9 +957,9 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c4013970217383f67b18aef68f6fb2e8d409bc5755227092d32efb0422ba24b8"
 
 [[package]]
-name = "tree-sitter-sql"
-version = "0.1.0"
-source = "git+https://github.com/janhoon/tree-sitter-sql?rev=bb0d0d255f55dbaf01df64effa9b2bc900f5bfd2#bb0d0d255f55dbaf01df64effa9b2bc900f5bfd2"
+name = "tree-sitter-sql-cadac"
+version = "0.1.4"
+source = "git+https://github.com/janhoon/tree-sitter-sql?tag=v0.1.4#b33537784eacf5224930f52b807c2d2c8c1eee16"
 dependencies = [
  "cc",
  "tree-sitter-language",
