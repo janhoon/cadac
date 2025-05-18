@@ -3,7 +3,13 @@ use parser::{ModelMetadata, ModelParser};
 
 mod args;
 mod cli;
+mod discovery;
 mod parser;
+
+#[cfg(test)]
+mod parser_test;
+#[cfg(test)]
+mod discovery_test;
 
 pub fn exec_cadac() {
     // let sql = parse_sql("SELECT a, b, c FROM users");

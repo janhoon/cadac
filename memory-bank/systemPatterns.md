@@ -5,10 +5,14 @@
 ```mermaid
 flowchart TD
     CLI[CLI Interface] --> Parser[SQL Parser]
+    CLI --> Discovery[Model Discovery]
     CLI --> TUI[Terminal UI]
     Parser --> ModelMetadata[Model Metadata]
-    ModelMetadata --> Catalog[Data Catalog]
-    TUI --> Catalog
+    Discovery --> ModelCatalog[Model Catalog]
+    ModelMetadata --> ModelCatalog
+    ModelCatalog --> DependencyGraph[Dependency Graph]
+    TUI --> ModelCatalog
+    TUI --> DependencyGraph
 ```
 
 ### Core Components
@@ -16,8 +20,10 @@ flowchart TD
 1. **CLI Interface**: Entry point for the application, handles command-line arguments and user input
 2. **SQL Parser**: Uses tree-sitter to parse SQL queries and extract metadata
 3. **Model Metadata**: Structures for representing data models, columns, and sources
-4. **Terminal UI**: Interactive interface for exploring and managing the data catalog
-5. **Data Catalog**: Repository of data assets and their metadata
+4. **Model Discovery**: Finds SQL files and builds a catalog of models
+5. **Model Catalog**: Repository of data models and their metadata
+6. **Dependency Graph**: Represents relationships between models
+7. **Terminal UI**: Interactive interface for exploring and managing the data catalog
 
 ## Key Technical Decisions
 
@@ -25,21 +31,31 @@ flowchart TD
 - **Decision**: Use tree-sitter for parsing SQL queries
 - **Rationale**: Tree-sitter provides robust parsing capabilities with error tolerance and incremental parsing
 - **Impact**: Enables accurate extraction of metadata from SQL queries with detailed AST traversal
+- **Current Status**: Basic parsing works, but metadata extraction needs improvement
 
-### 2. Terminal UI with Ratatui
+### 2. File-based Model Discovery
+- **Decision**: Implement file-based model discovery with recursive directory traversal
+- **Rationale**: Allows for flexible organization of SQL models in directories
+- **Impact**: Enables automatic discovery and cataloging of models from file system
+- **Current Status**: Basic discovery implemented, dependency tracking planned
+
+### 3. Terminal UI with Ratatui
 - **Decision**: Use Ratatui for the terminal user interface
 - **Rationale**: Ratatui provides a modern, feature-rich framework for building terminal UIs in Rust
 - **Impact**: Enables creation of an intuitive, responsive interface for interacting with the data catalog
+- **Current Status**: Planned for implementation after core functionality is complete
 
-### 3. Command-line Arguments with Clap
-- **Decision**: Use Clap for parsing command-line arguments
-- **Rationale**: Clap is a mature, feature-complete library for handling command-line arguments in Rust
-- **Impact**: Simplifies implementation of CLI commands and options
+### 4. Test-Driven Development
+- **Decision**: Follow TDD principles for implementation
+- **Rationale**: Ensures code quality and correctness from the start
+- **Impact**: Comprehensive test suite that guides implementation
+- **Current Status**: Tests implemented for parser and discovery components
 
-### 4. Error Handling with color-eyre
+### 5. Error Handling with color-eyre
 - **Decision**: Use color-eyre for error handling
 - **Rationale**: color-eyre provides rich, colorful error reports with context and backtraces
 - **Impact**: Improves developer and user experience when dealing with errors
+- **Current Status**: Implemented throughout the codebase
 
 ## Design Patterns in Use
 
@@ -47,21 +63,89 @@ flowchart TD
 - **Pattern**: Define behavior through traits (e.g., `ModelParser`)
 - **Implementation**: The `ModelParser` trait defines the interface for parsing SQL models
 - **Benefits**: Enables flexible implementation of parsing logic and potential for alternative parsers
+- **Example**:
+  ```rust
+  pub trait ModelParser {
+      fn parse_model(&mut self, sql: &str) -> Result<&Self, ModelParseError>;
+  }
+  
+  impl ModelParser for ModelMetadata {
+      fn parse_model(&mut self, sql: &str) -> Result<&Self, ModelParseError> {
+          // Implementation
+      }
+  }
+  ```
 
 ### 2. Builder Pattern
 - **Pattern**: Construct complex objects step by step
 - **Implementation**: `ModelMetadata` is built incrementally during SQL parsing
 - **Benefits**: Simplifies construction of complex metadata structures from parsed SQL
+- **Example**:
+  ```rust
+  // Building ModelMetadata through incremental updates
+  fn process_node(&mut self, node: &Node, source_bytes: &[u8]) {
+      match node.kind() {
+          NODE_KIND_FROM_CLAUSE => {
+              self.extract_sources_from_clause(node, source_bytes);
+          },
+          NODE_KIND_SELECT_LIST => {
+              self.extract_columns_from_select_list(node, source_bytes);
+          },
+          // Other node types
+      }
+  }
+  ```
 
 ### 3. Visitor Pattern
 - **Pattern**: Separate algorithms from object structures
 - **Implementation**: Tree traversal in the SQL parser visits nodes and processes them based on type
 - **Benefits**: Cleanly separates node traversal from node processing logic
+- **Example**:
+  ```rust
+  fn walk_tree(&mut self, n: Node, source_bytes: &[u8]) {
+      // Process current node
+      self.process_node(&n, source_bytes);
+      
+      // Traverse children
+      let mut cursor = n.walk();
+      if cursor.goto_first_child() {
+          // Process children recursively
+      }
+  }
+  ```
 
-### 4. Command Pattern
-- **Pattern**: Encapsulate requests as objects
-- **Implementation**: CLI commands are represented as structs with their own arguments
-- **Benefits**: Modular command implementation with clear separation of concerns
+### 4. Repository Pattern
+- **Pattern**: Centralize data access logic
+- **Implementation**: `ModelCatalog` manages a collection of models
+- **Benefits**: Provides a clean API for model discovery and management
+- **Example**:
+  ```rust
+  pub struct ModelCatalog {
+      pub models: HashMap<String, ModelMetadata>,
+      pub model_dir: PathBuf,
+  }
+  
+  impl ModelCatalog {
+      pub fn discover_models(&mut self) -> Result<()> {
+          // Implementation
+      }
+  }
+  ```
+
+### 5. Error Type Pattern
+- **Pattern**: Define domain-specific error types
+- **Implementation**: `ModelParseError` enum with variants for different error cases
+- **Benefits**: Provides clear, typed error handling
+- **Example**:
+  ```rust
+  #[derive(Debug, PartialEq)]
+  pub enum ModelParseError {
+      ParseError(String),
+      MultipleStatements(usize),
+  }
+  
+  impl std::error::Error for ModelParseError {}
+  ```
 
 ## Component Relationships
 
@@ -70,23 +154,52 @@ flowchart TD
 - Information is organized into ModelMetadata structures
 - ModelMetadata represents data models with columns and sources
 
+### Model Discovery and Model Catalog
+- Discovery component finds SQL files in the file system
+- Each SQL file is parsed to create a ModelMetadata instance
+- ModelMetadata instances are stored in the ModelCatalog
+- Catalog provides access to all discovered models
+
+### Model Catalog and Dependency Graph
+- Catalog contains all discovered models
+- Dependency graph is built from source/target relationships in models
+- Graph represents the execution order for models
+
 ### CLI and Terminal UI
 - CLI processes command-line arguments
 - Terminal UI provides interactive interface
-- Both components interact with the data catalog
+- Both components interact with the model catalog and dependency graph
 
 ## Critical Implementation Paths
 
 ### SQL Parsing Flow
 1. Parse SQL string using tree-sitter
-2. Traverse the syntax tree
+2. Traverse the syntax tree recursively
 3. Extract metadata about models, columns, and sources
 4. Validate the extracted metadata
-5. Store the metadata in the catalog
+5. Return the populated ModelMetadata
 
-### User Interaction Flow
+### Model Discovery Flow
+1. Find all SQL files in the specified directory (recursively)
+2. For each SQL file:
+   a. Extract model name from filename
+   b. Read SQL content
+   c. Parse SQL to create ModelMetadata
+   d. Add model to catalog
+3. Build dependency graph from model relationships
+
+### Dependency Tracking Flow (Planned)
+1. For each model in the catalog:
+   a. Identify source tables referenced in the model
+   b. Match source tables to other models in the catalog
+   c. Create directed edges in the dependency graph
+2. Validate the graph for cycles or missing dependencies
+3. Determine execution order based on dependencies
+
+### User Interaction Flow (Planned)
 1. Process command-line arguments
 2. Initialize the terminal UI
-3. Render the interface
-4. Handle user input events
-5. Update the display based on user actions
+3. Render the model catalog and dependency graph
+4. Handle user input events for navigation and selection
+5. Execute selected models based on dependencies
+6. Update the display with execution results

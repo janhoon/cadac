@@ -1,22 +1,33 @@
 # Progress: CADAC
 
 ## Current Status
-CADAC is in early development (version 0.1.0) with foundational components being established. The project has basic functionality for SQL parsing and a minimal terminal UI, but is not yet feature-complete for production use.
+CADAC is in early development (version 0.1.0) with significant progress on core components. The project has implemented SQL parsing with tree-sitter and model discovery functionality, with a focus on test-driven development. The terminal UI and dependency tracking features are planned for upcoming development.
 
 ## What Works
 
 ### SQL Parsing
-- ✅ Basic tree-sitter integration for SQL parsing
+- ✅ Tree-sitter integration for SQL parsing
 - ✅ Model metadata structure definition
-- ✅ Simple SQL statement validation
-- ✅ Error handling for parse failures
+- ✅ SQL statement validation
+- ✅ Error handling with std::error::Error implementation
 - ✅ Detection of multiple statements
+- ✅ Basic column extraction from SELECT statements
+- ✅ Comment parsing for descriptions
+- ✅ Support for column aliases
 
-### Terminal UI
-- ✅ Basic terminal initialization with ratatui
-- ✅ Simple rendering of text
-- ✅ Event handling for keyboard input
-- ✅ Terminal cleanup on exit
+### Model Discovery
+- ✅ File system traversal to find SQL files
+- ✅ SQL file content reading
+- ✅ Model metadata extraction from SQL files
+- ✅ Model catalog structure
+- ✅ Error handling for file operations
+- ✅ Support for recursive directory traversal
+
+### Testing Framework
+- ✅ Unit tests for parser functionality
+- ✅ Integration tests for model discovery
+- ✅ Test utilities for creating temporary files
+- ✅ Error case testing
 
 ### Command-line Interface
 - ✅ Basic CLI structure with clap
@@ -26,81 +37,88 @@ CADAC is in early development (version 0.1.0) with foundational components being
 ## What's Left to Build
 
 ### SQL Parsing Enhancements
-- 🔲 Complete AST traversal implementation
-- 🔲 Extract column metadata from select statements
-- 🔲 Parse column descriptions from comments
-- 🔲 Extract source table information
+- 🔲 Fix source table extraction in FROM clauses
+- 🔲 Improve column metadata extraction
+- 🔲 Complete support for table aliases
+- 🔲 Handle qualified column references
 - 🔲 Support for data types
 - 🔲 Handle more complex SQL constructs (joins, CTEs, etc.)
 
+### Model Discovery Enhancements
+- 🔲 Dependency tracking between models
+- 🔲 Build dependency graph
+- 🔲 Validate model relationships
+- 🔲 Support for model materialization options
+- 🔲 Model versioning
+
 ### Terminal UI Development
-- 🔲 Multi-view interface
+- 🔲 Multi-view interface with ratatui
 - 🔲 Model browser view
 - 🔲 Model detail view
-- 🔲 Navigation between views
+- 🔲 Dependency graph visualization
 - 🔲 Search functionality
 - 🔲 Keyboard shortcuts
 - 🔲 Help documentation
 
 ### Data Catalog
 - 🔲 Persistent storage for catalog data
-- 🔲 Model relationship tracking
 - 🔲 Data lineage visualization
 - 🔲 Metadata search capabilities
 - 🔲 Export functionality
 
 ### CLI Commands
-- 🔲 Command to parse SQL files
+- 🔲 Command to run models
 - 🔲 Command to generate documentation
 - 🔲 Command to query the catalog
 - 🔲 Command to export catalog data
 
 ## Known Issues
-1. SQL parser only handles basic SELECT statements
-2. Terminal UI is minimal with no navigation
-3. No persistent storage for catalog data
-4. Limited error handling in some areas
-5. No support for SQL dialects beyond standard SQL
+1. SQL parser has issues with source table extraction
+2. Column metadata extraction is incomplete
+3. Model descriptions are not correctly parsed in some cases
+4. No dependency tracking between models
+5. Terminal UI is not yet implemented
+6. Test failures in parser and discovery components
 
 ## Evolution of Project Decisions
 
 ### Parser Implementation
 - **Initial Decision**: Use tree-sitter for SQL parsing
-- **Current Status**: Basic integration complete
-- **Future Direction**: Enhance traversal and metadata extraction
+- **Current Status**: Basic parsing works, but metadata extraction needs improvement
+- **Future Direction**: Enhance AST traversal and metadata extraction, fix current issues
 
-### Terminal UI
-- **Initial Decision**: Use ratatui for terminal UI
-- **Current Status**: Basic setup with minimal functionality
-- **Future Direction**: Develop multi-view interface with navigation
+### Model Discovery
+- **Initial Decision**: Implement file-based model discovery
+- **Current Status**: Basic discovery works, but dependency tracking is missing
+- **Future Direction**: Add dependency graph construction and validation
+
+### Testing Approach
+- **Initial Decision**: Use test-driven development
+- **Current Status**: Comprehensive test suite with some failing tests
+- **Future Direction**: Fix failing tests and continue TDD for new features
 
 ### Project Structure
-- **Initial Decision**: Organize by functionality (args, cli, parser)
-- **Current Status**: Basic structure established
-- **Future Direction**: Consider additional modules as functionality grows
-
-### Data Model
-- **Initial Decision**: Define core structures for models, columns, and sources
-- **Current Status**: Basic structures defined
-- **Future Direction**: Enhance with additional metadata and relationships
+- **Initial Decision**: Organize by functionality (parser, discovery, cli)
+- **Current Status**: Clear separation of concerns with dedicated modules
+- **Future Direction**: Add UI module and potentially split parser into submodules
 
 ## Milestones
 
-### Milestone 1: Foundation (Current)
+### Milestone 1: Foundation (Completed)
 - ✅ Project setup
 - ✅ Basic SQL parsing
 - ✅ Core data structures
-- ✅ Minimal terminal UI
+- ✅ Model discovery framework
 
-### Milestone 2: Core Functionality
-- 🔲 Complete SQL parser
-- 🔲 Enhanced metadata extraction
-- 🔲 Basic terminal UI navigation
+### Milestone 2: Core Functionality (Current)
+- 🔄 Complete SQL parser with metadata extraction
+- 🔄 Model discovery with dependency tracking
+- 🔲 Basic terminal UI
 - 🔲 CLI commands for basic operations
 
 ### Milestone 3: Enhanced Features
-- 🔲 Persistent catalog storage
-- 🔲 Data lineage tracking
+- 🔲 Dependency graph visualization
+- 🔲 Model execution
 - 🔲 Advanced terminal UI
 - 🔲 Documentation generation
 
