@@ -958,8 +958,8 @@ checksum = "c4013970217383f67b18aef68f6fb2e8d409bc5755227092d32efb0422ba24b8"
 
 [[package]]
 name = "tree-sitter-sql-cadac"
-version = "0.1.4"
-source = "git+https://github.com/janhoon/tree-sitter-sql?tag=v0.1.4#b33537784eacf5224930f52b807c2d2c8c1eee16"
+version = "0.1.5"
+source = "git+https://github.com/janhoon/tree-sitter-sql?tag=v0.1.5#83e16f319b81c9d6f382397900482e588b647f12"
 dependencies = [
  "cc",
  "tree-sitter-language",
