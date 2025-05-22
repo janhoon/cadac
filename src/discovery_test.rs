@@ -15,7 +15,7 @@ fn test_discover_models_in_directory() -> Result<()> {
     // Create a few test SQL files
     create_test_sql_file(&model_dir, "model1.sql", "SELECT a, b FROM source1")?;
     create_test_sql_file(&model_dir, "model2.sql", "SELECT c, d FROM source2")?;
-    
+
     // Create a subdirectory with more SQL files
     let subdir = model_dir.join("subdir");
     fs::create_dir(&subdir)?;
@@ -35,7 +35,7 @@ fn test_discover_models_in_directory() -> Result<()> {
     assert!(catalog.models.contains_key("model1"));
     assert!(catalog.models.contains_key("model2"));
     assert!(catalog.models.contains_key("model3"));
-    
+
     // Verify that non-SQL files were ignored
     assert!(!catalog.models.contains_key("not_a_model"));
 
@@ -43,11 +43,11 @@ fn test_discover_models_in_directory() -> Result<()> {
     let model1 = catalog.models.get("model1").unwrap();
     assert_eq!(model1.sources.len(), 1);
     assert_eq!(model1.sources.iter().next().unwrap().name, "source1");
-    
+
     let model2 = catalog.models.get("model2").unwrap();
     assert_eq!(model2.sources.len(), 1);
     assert_eq!(model2.sources.iter().next().unwrap().name, "source2");
-    
+
     let model3 = catalog.models.get("model3").unwrap();
     assert_eq!(model3.sources.len(), 1);
     assert_eq!(model3.sources.iter().next().unwrap().name, "source3");
@@ -60,11 +60,11 @@ fn test_discover_models_nonexistent_directory() -> Result<()> {
     // Try to discover models in a nonexistent directory
     let nonexistent_dir = Path::new("/path/that/does/not/exist");
     let mut catalog = ModelCatalog::new(nonexistent_dir.to_path_buf());
-    
+
     // This should return an error
     let result = catalog.discover_models();
     assert!(result.is_err());
-    
+
     Ok(())
 }
 

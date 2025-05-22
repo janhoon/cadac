@@ -1,23 +1,23 @@
+use color_eyre::Result;
+use color_eyre::eyre::{Context, eyre};
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
-use color_eyre::Result;
-use color_eyre::eyre::{eyre, Context};
 
 use crate::parser::{ModelMetadata, ModelParser};
 
 /// Recursively find all SQL files in a directory
 fn find_sql_files(dir: &Path) -> Result<Vec<PathBuf>> {
     let mut sql_files = Vec::new();
-    
+
     if dir.is_dir() {
-        for entry_result in fs::read_dir(dir)
-            .wrap_err_with(|| format!("Failed to read directory: {:?}", dir))?
+        for entry_result in
+            fs::read_dir(dir).wrap_err_with(|| format!("Failed to read directory: {:?}", dir))?
         {
             let entry = entry_result
                 .wrap_err_with(|| format!("Failed to read directory entry in {:?}", dir))?;
             let path = entry.path();
-            
+
             if path.is_dir() {
                 // Recursively process subdirectories
                 let mut sub_files = find_sql_files(&path)?;
@@ -30,7 +30,7 @@ fn find_sql_files(dir: &Path) -> Result<Vec<PathBuf>> {
             }
         }
     }
-    
+
     Ok(sql_files)
 }
 
@@ -55,12 +55,15 @@ impl ModelCatalog {
     pub fn discover_models(&mut self) -> Result<()> {
         // Check if the directory exists
         if !self.model_dir.exists() {
-            return Err(eyre!("Model directory does not exist: {:?}", self.model_dir));
+            return Err(eyre!(
+                "Model directory does not exist: {:?}",
+                self.model_dir
+            ));
         }
 
         // Find all SQL files in the directory
         let sql_files = find_sql_files(&self.model_dir)?;
-        
+
         // Process each SQL file
         for file_path in sql_files {
             self.process_sql_file(&file_path)?;
@@ -77,19 +80,20 @@ impl ModelCatalog {
             .and_then(|name| name.to_str())
             .ok_or_else(|| eyre!("Failed to extract model name from path: {:?}", file_path))?
             .to_string();
-        
+
         // Read the SQL file content
         let sql_content = fs::read_to_string(file_path)
             .wrap_err_with(|| format!("Failed to read SQL file: {:?}", file_path))?;
-        
+
         // Create and parse the model
         let mut model = ModelMetadata::new(model_name.clone());
-        model.parse_model(&sql_content)
+        model
+            .parse_model(&sql_content)
             .map_err(|e| eyre!("Failed to parse model {}: {}", model_name, e))?;
-        
+
         // Add the model to the catalog
         self.models.insert(model_name, model);
-        
+
         Ok(())
     }
 
@@ -117,7 +121,7 @@ mod tests {
         // Create a few test SQL files
         create_test_sql_file(&model_dir, "model1.sql", "SELECT a, b FROM source1")?;
         create_test_sql_file(&model_dir, "model2.sql", "SELECT c, d FROM source2")?;
-        
+
         // Create a subdirectory with more SQL files
         let subdir = model_dir.join("subdir");
         fs::create_dir(&subdir)?;
