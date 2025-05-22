@@ -42,15 +42,15 @@ fn test_discover_models_in_directory() -> Result<()> {
     // Verify model content
     let model1 = catalog.models.get("model1").unwrap();
     assert_eq!(model1.sources.len(), 1);
-    assert_eq!(model1.sources.iter().next().unwrap(), "source_table");
+    assert_eq!(model1.sources.iter().next().unwrap().name, "source1");
     
     let model2 = catalog.models.get("model2").unwrap();
     assert_eq!(model2.sources.len(), 1);
-    assert_eq!(model2.sources.iter().next().unwrap(), "source_table");
+    assert_eq!(model2.sources.iter().next().unwrap().name, "source2");
     
     let model3 = catalog.models.get("model3").unwrap();
     assert_eq!(model3.sources.len(), 1);
-    assert_eq!(model3.sources.iter().next().unwrap(), "source_table");
+    assert_eq!(model3.sources.iter().next().unwrap().name, "source3");
 
     Ok(())
 }

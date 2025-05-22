@@ -93,12 +93,12 @@ impl ModelCatalog {
         Ok(())
     }
 
-    /// Build a dependency graph from the discovered models
-    pub fn build_dependency_graph(&self) -> Result<()> {
-        // This will be implemented in the next step
-        // For now, just return Ok
-        Ok(())
-    }
+    // /// Build a dependency graph from the discovered models
+    // pub fn build_dependency_graph(&self) -> Result<()> {
+    //     // This will be implemented in the next step
+    //     // For now, just return Ok
+    //     Ok(())
+    // }
 }
 
 #[cfg(test)]
