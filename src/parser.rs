@@ -351,7 +351,9 @@ impl ModelMetadata {
                         description = Some(
                             description.unwrap()
                                 + "\n"
-                                + &child.utf8_text(source_bytes).unwrap_or("").trim(),
+                                + &self
+                                    .extract_comment_text(&child, source_bytes)
+                                    .unwrap_or("".to_string()),
                         );
                     }
                 }
