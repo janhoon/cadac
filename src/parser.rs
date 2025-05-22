@@ -1,4 +1,3 @@
-use std::collections::HashSet;
 use tree_sitter::{Node, Parser};
 
 const NODE_KIND_SOURCE_FILE: &str = "source_file";
@@ -9,7 +8,6 @@ const NODE_KIND_TABLE_NAME: &str = "table_name";
 const NODE_KIND_SCHEMA_NAME: &str = "schema_name";
 const NODE_KIND_DATABASE_NAME: &str = "database_name";
 const NODE_KIND_OBJECT_REFERENCE: &str = "object_reference";
-const NODE_KIND_REFERENCE: &str = "reference";
 const NODE_KIND_ALIAS: &str = "alias";
 const NODE_KIND_JOIN: &str = "join";
 const NODE_KIND_COLUMN_REFERENCE: &str = "column_reference";
@@ -48,7 +46,6 @@ pub struct Source {
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Column {
-    pub id: String,
     pub name: String,
     pub description: Option<String>,
     // TODO: consider an enum here in the future
@@ -128,8 +125,8 @@ impl ModelMetadata {
             ));
         }
 
-        // Extract model description from the root node
-        self.extract_model_description(&node, source_bytes);
+        // Extract model description from the select statement
+        self.extract_model_description(&statement_nodes[0], source_bytes);
 
         // Process the select statement to extract columns and sources
         self.walk_tree(statement_nodes[0], source_bytes);
@@ -139,89 +136,63 @@ impl ModelMetadata {
 
     // Mutable reference to self for updating during parsing
     fn walk_tree(&mut self, n: Node, source_bytes: &[u8]) {
-        // Create a cursor for tree traversal
-        let mut cursor = n.walk();
+        // Process current node and check if we should continue traversing
+        let should_traverse_children = self.process_node(&n, source_bytes);
 
-        // Process current node
-        self.process_node(&n, source_bytes);
+        if should_traverse_children {
+            // Only traverse children if the node wasn't fully processed
+            let mut cursor = n.walk();
+            if cursor.goto_first_child() {
+                let child = cursor.node();
+                self.walk_tree(child, source_bytes);
 
-        // Traverse children - first go to the first child
-        if cursor.goto_first_child() {
-            // Process the first child
-            let child = cursor.node();
-            self.walk_tree(child, source_bytes);
-
-            // Process all siblings
-            while cursor.goto_next_sibling() {
-                let sibling = cursor.node();
-                self.walk_tree(sibling, source_bytes);
+                while cursor.goto_next_sibling() {
+                    let sibling = cursor.node();
+                    self.walk_tree(sibling, source_bytes);
+                }
             }
         }
     }
 
-    fn process_node(&mut self, node: &Node, source_bytes: &[u8]) {
+    fn process_node(&mut self, node: &Node, source_bytes: &[u8]) -> bool {
         // Get the current node kind
         let kind = node.kind();
 
         // Process node based on its kind
         match kind {
-            // SQL statements
-            NODE_KIND_SELECT_STATEMENT => {
-                // Process select statement
-                // This is handled by traversing its children
+            NODE_KIND_SELECT_LIST => {
+                // Process all columns in the select list
+                self.extract_columns_from_select_list(node, source_bytes);
+                false // Don't traverse children - we handled them all
             }
             NODE_KIND_FROM_CLAUSE => {
-                // Process from clause to extract source tables
+                // Process all sources in the from clause
                 self.extract_sources_from_clause(node, source_bytes);
-            }
-            NODE_KIND_OBJECT_REFERENCE => {
-                // Process object reference (table reference)
-                if let Some(parent) = node.parent() {
-                    if parent.kind() == NODE_KIND_FROM_CLAUSE {
-                        self.extract_source_from_object_reference(node, source_bytes);
-                    }
-                }
-            }
-            NODE_KIND_TABLE_REFERENCE => {
-                // Process table reference
-                self.extract_source_from_table_reference(node, source_bytes);
-            }
-            NODE_KIND_SELECT_LIST => {
-                // Process select list to extract columns
-                self.extract_columns_from_select_list(node, source_bytes);
-            }
-            NODE_KIND_SELECT_LIST_ITEM => {
-                // Process select list item to extract column
-                self.extract_column_from_select_list_item(node, source_bytes);
+                false // Don't traverse children - we handled them all
             }
             NODE_KIND_JOIN => {
-                // Process join to extract joined table as a source
+                // Process join sources
                 self.extract_source_from_join(node, source_bytes);
+                false // Don't traverse children
             }
-            _ => {
-                // Other node types are handled by traversing their children
-            }
+            _ => true, // Continue traversing for other node types
         }
     }
 
-    // Extract model description from leading comments
-    fn extract_model_description(&mut self, node: &Node, source_bytes: &[u8]) {
-        // Look for comments at the beginning of the file
+    // Extract model description from comments within select_statement
+    fn extract_model_description(&mut self, select_statement_node: &Node, source_bytes: &[u8]) {
         let mut comments = Vec::new();
 
-        for i in 0..node.child_count() {
-            let child = node.child(i).unwrap();
+        // Look for comment nodes that are direct children of select_statement
+        for i in 0..select_statement_node.child_count() {
+            let child = select_statement_node.child(i).unwrap();
             if child.kind() == "comment" {
-                // Extract comment text
-                for j in 0..child.child_count() {
-                    let comment_part = child.child(j).unwrap();
-                    if comment_part.kind() == "comment_text" {
-                        let text = comment_part.utf8_text(source_bytes).unwrap_or("").trim();
-                        comments.push(text.to_string());
-                    }
+                // Extract comment_text from the comment node
+                if let Some(comment_text) = self.extract_comment_text(&child, source_bytes) {
+                    comments.push(comment_text);
                 }
-            } else if child.kind() == NODE_KIND_SELECT_STATEMENT {
-                // Stop when we reach the SELECT statement
+            } else if child.kind() == "SELECT" {
+                // Stop when we reach the SELECT keyword
                 break;
             }
         }
@@ -230,6 +201,21 @@ impl ModelMetadata {
         if !comments.is_empty() {
             self.description = Some(comments.join(" "));
         }
+    }
+
+    // Helper function to extract comment_text from a comment node
+    fn extract_comment_text(&self, comment_node: &Node, source_bytes: &[u8]) -> Option<String> {
+        // Look for comment_text child node
+        for i in 0..comment_node.child_count() {
+            let child = comment_node.child(i).unwrap();
+            if child.kind() == "comment_text" {
+                let text = child.utf8_text(source_bytes).unwrap_or("").trim();
+                if !text.is_empty() {
+                    return Some(text.to_string());
+                }
+            }
+        }
+        None
     }
 
     // Extract source tables from FROM clause
@@ -256,42 +242,61 @@ impl ModelMetadata {
 
     // Extract source from table reference
     fn extract_source_from_table_reference(&mut self, node: &Node, source_bytes: &[u8]) {
-        let mut talbe_name = String::new();
+        let mut table_name = String::new();
         let mut schema_name = String::new();
         let mut database_name = String::new();
 
-        // Look for the name reference
+        // Look for the name components
         for i in 0..node.child_count() {
             let child = node.child(i).unwrap();
-            // In tree-sitter-sql-cadac, the name field might be identified differently
-            // We'll look for a reference node that's likely to be the name
-            // if child.kind() == NODE_KIND_TABLE_NAME {
-            //     let text = child.utf8_text(source_bytes).unwrap_or("").to_string();
-            //     talbe_name = text;
-            // }
             match child.kind() {
                 NODE_KIND_TABLE_NAME => {
-                    let text = child.utf8_text(source_bytes).unwrap_or("").to_string();
-                    talbe_name = text;
-                },
+                    table_name = child.utf8_text(source_bytes).unwrap_or("").to_string();
+                }
                 NODE_KIND_SCHEMA_NAME => {
-                    let text = child.utf8_text(source_bytes).unwrap_or("").to_string();
-                    schema_name = text;
-                },
+                    schema_name = child.utf8_text(source_bytes).unwrap_or("").to_string();
+                }
                 NODE_KIND_DATABASE_NAME => {
-                    let text = child.utf8_text(source_bytes).unwrap_or("").to_string();
-                    database_name = text;
-                },
+                    database_name = child.utf8_text(source_bytes).unwrap_or("").to_string();
+                }
                 _ => {}
             }
         }
 
-        let fully_qualified_name = format!("{}.{}.{}", database_name, schema_name, talbe_name);
+        // table name should never be empty
+        assert!(!table_name.is_empty());
 
-        for source in self.sources.iter() {
-            if source.id == fully_qualified_name {
-                break;
-            }
+        let source_name = if !database_name.is_empty() && !schema_name.is_empty() {
+            format!("{}.{}.{}", database_name, schema_name, table_name)
+        } else if !schema_name.is_empty() {
+            format!("{}.{}", schema_name, table_name)
+        } else {
+            table_name.clone()
+        };
+
+        // Check if this source already exists
+        let mut found = false;
+        if self.sources.iter().any(|s| s.id == source_name) {
+            found = true;
+        }
+
+        if !found {
+            let source = Source {
+                id: source_name.clone(),
+                name: table_name,
+                description: None,
+                database: if database_name.is_empty() {
+                    None
+                } else {
+                    Some(database_name)
+                },
+                schema: if schema_name.is_empty() {
+                    None
+                } else {
+                    Some(schema_name)
+                },
+            };
+            self.sources.push(source);
         }
     }
 
@@ -313,51 +318,58 @@ impl ModelMetadata {
             let child = node.child(i).unwrap();
             if child.kind() == NODE_KIND_SELECT_LIST_ITEM {
                 self.extract_column_from_select_list_item(&child, source_bytes);
-            } else if child.kind().contains("select_list_item") {
-                // Handle other select list item types (like select_list_item_with_separator)
-                self.extract_column_from_select_list_item(&child, source_bytes);
             }
         }
     }
 
-    // Extract column from select list item
+    // Extract column from select list item based on actual tree structure
     fn extract_column_from_select_list_item(&mut self, node: &Node, source_bytes: &[u8]) {
         let mut column_name = String::new();
         let mut column_alias = String::new();
         let mut description = None;
 
-        // Extract column reference
+        // Based on the tree structure:
+        // select_list_item contains: comment, column_table_reference, column_reference, AS, alias, comment
         for i in 0..node.child_count() {
             let child = node.child(i).unwrap();
 
-            // Get column name from column reference
-            if child.kind() == NODE_KIND_COLUMN_REFERENCE {
-                for j in 0..child.child_count() {
-                    let ref_child = child.child(j).unwrap();
-                    if ref_child.kind() == NODE_KIND_REFERENCE {
-                        column_name = ref_child.utf8_text(source_bytes).unwrap_or("").to_string();
+            match child.kind() {
+                NODE_KIND_COLUMN_REFERENCE => {
+                    // Get the column name directly from the column_reference node
+                    column_name = child.utf8_text(source_bytes).unwrap_or("").to_string();
+                }
+                NODE_KIND_ALIAS => {
+                    // Get the alias name
+                    column_alias = child.utf8_text(source_bytes).unwrap_or("").to_string();
+                }
+                "comment" => {
+                    // Extract description from comment using the helper function
+                    if description.is_none() {
+                        description = self.extract_comment_text(&child, source_bytes);
+                    } else {
+                        // If we already have a description, add the comment to it
+                        description = Some(
+                            description.unwrap()
+                                + "\n"
+                                + &self
+                                    .extract_comment_text(&child, source_bytes)
+                                    .unwrap_or("".to_string()),
+                        );
                     }
                 }
-            }
-
-            // Get alias if present
-            if child.kind() == NODE_KIND_ALIAS {
-                column_alias = child.utf8_text(source_bytes).unwrap_or("").to_string();
-            }
-
-            // Get description from comment
-            if child.kind() == "comment" {
-                for j in 0..child.child_count() {
-                    let comment_part = child.child(j).unwrap();
-                    if comment_part.kind() == "comment_text" {
-                        let text = comment_part.utf8_text(source_bytes).unwrap_or("").trim();
-                        description = Some(text.to_string());
+                _ => {
+                    // For other node types, check if they contain text that looks like a column name
+                    if column_name.is_empty() {
+                        let text = child.utf8_text(source_bytes).unwrap_or("").trim();
+                        if !text.is_empty() && !text.contains(" ") && text != "AS" && text != "," {
+                            column_name = text.to_string();
+                        }
                     }
                 }
             }
         }
 
-        // Use alias as column name if available
+        // Use alias as column name if available, otherwise use column name
         let final_name = if !column_alias.is_empty() {
             column_alias
         } else {

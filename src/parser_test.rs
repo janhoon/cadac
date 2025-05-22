@@ -12,7 +12,7 @@ fn test_parse_simple_select() -> Result<()> {
     
     // Verify sources
     assert_eq!(result.sources.len(), 1);
-    assert_eq!(result.sources.iter().next().unwrap(), "source_table");
+    assert_eq!(result.sources.iter().next().unwrap().name, "source_table");
     
     // Verify columns
     assert_eq!(result.columns.len(), 3);
@@ -36,7 +36,7 @@ fn test_parse_select_with_aliases() -> Result<()> {
     
     // Verify sources
     assert_eq!(result.sources.len(), 1);
-    assert_eq!(result.sources.iter().next().unwrap(), "source_table");
+    assert_eq!(result.sources.iter().next().unwrap().name, "source_table");
     
     // Verify columns with aliases
     assert_eq!(result.columns.len(), 3);
@@ -60,7 +60,7 @@ fn test_parse_select_with_table_reference() -> Result<()> {
     
     // Verify sources
     assert_eq!(result.sources.len(), 1);
-    assert_eq!(result.sources.iter().next().unwrap(), "source_table");
+    assert_eq!(result.sources.iter().next().unwrap().name, "source_table");
     
     // Verify columns
     assert_eq!(result.columns.len(), 3);
@@ -91,7 +91,7 @@ fn test_parse_select_with_comments() -> Result<()> {
     
     // Verify sources
     assert_eq!(result.sources.len(), 1);
-    assert_eq!(result.sources.iter().next().unwrap(), "source_table");
+    assert_eq!(result.sources.iter().next().unwrap().name, "source_table");
     
     // Verify columns
     assert_eq!(result.columns.len(), 3);
