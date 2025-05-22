@@ -286,11 +286,8 @@ impl ModelMetadata {
 
             // Check if this source already exists
             let mut found = false;
-            for source in self.sources.iter() {
-                if source.name == table_name {
-                    found = true;
-                    break;
-                }
+            if self.sources.iter().any(|s| s.id == source_name) {
+                found = true;
             }
 
             if !found {
