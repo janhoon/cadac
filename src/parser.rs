@@ -138,14 +138,14 @@ impl ModelMetadata {
     fn walk_tree(&mut self, n: Node, source_bytes: &[u8]) {
         // Process current node and check if we should continue traversing
         let should_traverse_children = self.process_node(&n, source_bytes);
-        
+
         if should_traverse_children {
             // Only traverse children if the node wasn't fully processed
             let mut cursor = n.walk();
             if cursor.goto_first_child() {
                 let child = cursor.node();
                 self.walk_tree(child, source_bytes);
-                
+
                 while cursor.goto_next_sibling() {
                     let sibling = cursor.node();
                     self.walk_tree(sibling, source_bytes);
@@ -175,7 +175,7 @@ impl ModelMetadata {
                 self.extract_source_from_join(node, source_bytes);
                 false // Don't traverse children
             }
-            _ => true // Continue traversing for other node types
+            _ => true, // Continue traversing for other node types
         }
     }
 
@@ -252,54 +252,51 @@ impl ModelMetadata {
             match child.kind() {
                 NODE_KIND_TABLE_NAME => {
                     table_name = child.utf8_text(source_bytes).unwrap_or("").to_string();
-                },
+                }
                 NODE_KIND_SCHEMA_NAME => {
                     schema_name = child.utf8_text(source_bytes).unwrap_or("").to_string();
-                },
+                }
                 NODE_KIND_DATABASE_NAME => {
                     database_name = child.utf8_text(source_bytes).unwrap_or("").to_string();
-                },
+                }
                 _ => {}
             }
         }
 
-        // For simple table names without schema/database, use the table name directly
-        if table_name.is_empty() && schema_name.is_empty() && database_name.is_empty() {
-            // Try to get the text content of the entire node as fallback
-            table_name = node.utf8_text(source_bytes).unwrap_or("").to_string();
-            // Remove any alias part (everything after "AS" or whitespace)
-            if let Some(as_pos) = table_name.find(" AS ") {
-                table_name = table_name[..as_pos].to_string();
-            } else if let Some(space_pos) = table_name.find(' ') {
-                table_name = table_name[..space_pos].to_string();
-            }
+        // table name should never be empty
+        assert!(!table_name.is_empty());
+
+        let source_name = if !database_name.is_empty() && !schema_name.is_empty() {
+            format!("{}.{}.{}", database_name, schema_name, table_name)
+        } else if !schema_name.is_empty() {
+            format!("{}.{}", schema_name, table_name)
+        } else {
+            table_name.clone()
+        };
+
+        // Check if this source already exists
+        let mut found = false;
+        if self.sources.iter().any(|s| s.id == source_name) {
+            found = true;
         }
 
-        if !table_name.is_empty() {
-            let source_name = if !database_name.is_empty() && !schema_name.is_empty() {
-                format!("{}.{}.{}", database_name, schema_name, table_name)
-            } else if !schema_name.is_empty() {
-                format!("{}.{}", schema_name, table_name)
-            } else {
-                table_name.clone()
+        if !found {
+            let source = Source {
+                id: source_name.clone(),
+                name: table_name,
+                description: None,
+                database: if database_name.is_empty() {
+                    None
+                } else {
+                    Some(database_name)
+                },
+                schema: if schema_name.is_empty() {
+                    None
+                } else {
+                    Some(schema_name)
+                },
             };
-
-            // Check if this source already exists
-            let mut found = false;
-            if self.sources.iter().any(|s| s.id == source_name) {
-                found = true;
-            }
-
-            if !found {
-                let source = Source {
-                    id: source_name.clone(),
-                    name: table_name,
-                    description: None,
-                    database: if database_name.is_empty() { None } else { Some(database_name) },
-                    schema: if schema_name.is_empty() { None } else { Some(schema_name) },
-                };
-                self.sources.push(source);
-            }
+            self.sources.push(source);
         }
     }
 
@@ -340,20 +337,24 @@ impl ModelMetadata {
                 NODE_KIND_COLUMN_REFERENCE => {
                     // Get the column name directly from the column_reference node
                     column_name = child.utf8_text(source_bytes).unwrap_or("").to_string();
-                },
+                }
                 NODE_KIND_ALIAS => {
                     // Get the alias name
                     column_alias = child.utf8_text(source_bytes).unwrap_or("").to_string();
-                },
+                }
                 "comment" => {
                     // Extract description from comment using the helper function
                     if description.is_none() {
                         description = self.extract_comment_text(&child, source_bytes);
                     } else {
                         // If we already have a description, add the comment to it
-                        description = Some(description.unwrap() + "\n" + &child.utf8_text(source_bytes).unwrap_or("").trim());
+                        description = Some(
+                            description.unwrap()
+                                + "\n"
+                                + &child.utf8_text(source_bytes).unwrap_or("").trim(),
+                        );
                     }
-                },
+                }
                 _ => {
                     // For other node types, check if they contain text that looks like a column name
                     if column_name.is_empty() {
