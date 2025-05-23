@@ -10,9 +10,22 @@ flowchart TD
     Parser --> ModelMetadata[Model Metadata]
     Discovery --> ModelCatalog[Model Catalog]
     ModelMetadata --> ModelCatalog
-    ModelCatalog --> DependencyGraph[Dependency Graph]
+    ModelCatalog --> DependencyResolver[Dependency Resolver]
+    DependencyResolver --> DependencyGraph[Dependency Graph - petgraph]
+    DependencyGraph --> ExecutionPlanner[Execution Planner]
     TUI --> ModelCatalog
     TUI --> DependencyGraph
+    TUI --> ExecutionPlanner
+    
+    subgraph "Schema-Based Organization"
+        SchemaA[models/client/]
+        SchemaB[models/analytics/]
+        SchemaC[models/staging/]
+    end
+    
+    Discovery --> SchemaA
+    Discovery --> SchemaB
+    Discovery --> SchemaC
 ```
 
 ### Core Components
@@ -56,6 +69,24 @@ flowchart TD
 - **Rationale**: color-eyre provides rich, colorful error reports with context and backtraces
 - **Impact**: Improves developer and user experience when dealing with errors
 - **Current Status**: Implemented throughout the codebase
+
+### 6. petgraph for Dependency Management
+- **Decision**: Use petgraph library for dependency graph algorithms
+- **Rationale**: Proven, battle-tested graph algorithms instead of rolling our own
+- **Impact**: Robust cycle detection, topological sorting, and graph traversal
+- **Current Status**: Selected for implementation, not yet integrated
+
+### 7. Schema-Based Folder Organization
+- **Decision**: Map folder structure to database schema (models/schema/table.sql → schema.table)
+- **Rationale**: Natural organization that mirrors database structure, environment portability
+- **Impact**: Clean SQL with no templating, automatic schema inference from file location
+- **Current Status**: Architectural decision made, implementation pending
+
+### 8. Pure SQL Approach
+- **Decision**: Support only standard SQL with no templating or special syntax
+- **Rationale**: Avoid dbt-style templating, keep SQL readable and portable
+- **Impact**: Dependency resolution through intelligent parsing, not template references
+- **Current Status**: Core principle established, guides all implementation decisions
 
 ## Design Patterns in Use
 

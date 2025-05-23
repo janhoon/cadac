@@ -1,54 +1,61 @@
 # Active Context: CADAC
 
 ## Current Work Focus
-The project is in early development stages, with significant progress on the core SQL parsing and model discovery functionality:
+The project has completed its foundational components and is now ready to implement the dependency system:
 
-1. **SQL Parsing Infrastructure**: Implementing robust SQL parsing using tree-sitter with focus on metadata extraction
-2. **Model Discovery**: Building functionality to discover and catalog SQL models from files
-3. **Test-Driven Development**: Developing comprehensive tests for parser and discovery components
+1. **Dependency System Implementation**: Building intelligent dependency tracking for SQL models using pure SQL (no templating)
+2. **Schema-Based Organization**: Implementing folder structure → schema mapping for natural database organization
+3. **Graph-Based Dependency Resolution**: Integrating petgraph library for robust dependency analysis
 
 ## Recent Changes
-- Enhanced SQL parser implementation with improved AST traversal
-- Added support for extracting column metadata from SELECT statements
-- Implemented model discovery functionality to find and process SQL files
-- Created test suite for parser and discovery components
-- Added support for handling select_list_item_with_separator nodes
-- Improved error handling in the parser with std::error::Error implementation
+- Completed SQL parser implementation with working metadata extraction
+- Finished model discovery functionality with comprehensive testing
+- All tests are now passing for parser and discovery components
+- Established architectural decisions for dependency system design
+- Decided on schema-based folder organization (models/schema/table.sql → schema.table)
+- Selected petgraph library for dependency graph management
+- Clarified pure SQL approach (no templating like dbt)
 
 ## Next Steps
-1. **Fix Current Test Failures**
-   - Address issues with source table extraction in the parser
-   - Fix column metadata extraction in SELECT statements
-   - Ensure model descriptions are correctly parsed from comments
+1. **Implement Core Dependency System**
+   - Add petgraph dependency to Cargo.toml
+   - Create dependency data structures (ModelIdentity, DependencyGraph)
+   - Implement schema-based model identity resolution from folder paths
 
-2. **Complete SQL Parser Implementation**
-   - Finish implementation of source table extraction
-   - Improve handling of table aliases and qualified column names
-   - Support more complex SQL constructs (joins, CTEs)
+2. **Smart Reference Resolution**
+   - Enhance table reference parsing to distinguish qualified vs unqualified names
+   - Implement resolution rules: schema.table → model lookup, db.schema.table → external
+   - Add context-aware dependency matching based on current model's schema
 
-3. **Enhance Model Discovery**
-   - Implement dependency tracking between models
-   - Build dependency graph based on source/target relationships
-   - Add validation for discovered models
+3. **Graph Construction & Analysis**
+   - Build dependency graph using petgraph with model qualified names as nodes
+   - Implement cycle detection and topological sorting for execution order
+   - Add dependency analysis methods (impact analysis, lineage tracking)
 
-4. **Develop Terminal UI**
-   - Create views for browsing discovered models
-   - Implement visualization of model dependencies
-   - Add search and filtering capabilities
+4. **Integration & Testing**
+   - Extend ModelCatalog with dependency graph functionality
+   - Create comprehensive tests for dependency resolution scenarios
+   - Test with complex multi-schema model structures
 
 ## Active Decisions and Considerations
 
-### Parser Implementation
-- Using a recursive tree traversal approach for AST processing
-- Extracting metadata from SQL comments for documentation
-- Handling different node types in the tree-sitter SQL grammar
-- Considering how to best represent source tables and their relationships to columns
+### Dependency System Architecture
+- Using petgraph library for robust graph algorithms (cycle detection, topological sort)
+- Schema-based folder organization: models/schema/table.sql → schema.table
+- Pure SQL approach with no templating or special syntax
+- Environment portability through connection string database resolution
 
-### Model Discovery
-- Using file system traversal to find SQL files
-- Extracting model names from filenames
-- Building a catalog of models with their metadata
-- Planning for dependency graph construction
+### Reference Resolution Strategy
+- Qualified references (schema.table) → direct model lookup
+- Unqualified references (table) → search current schema first
+- Database-qualified references (db.schema.table) → external tables, not model dependencies
+- Context-aware resolution based on current model's schema location
+
+### Model Identity System
+- Folder structure determines schema: models/client/users.sql → client.users
+- Database comes from connection string/environment, not folder structure
+- Support for nested organization folders that don't affect qualification
+- Qualified names (schema.table) as primary model identifiers
 
 ### Testing Strategy
 - Implementing comprehensive unit tests for parser functionality

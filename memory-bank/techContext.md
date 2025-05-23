@@ -14,21 +14,27 @@
    - Custom SQL grammar: tree-sitter-sql-cadac (v0.1.5)
    - Repository: https://github.com/janhoon/tree-sitter-sql
 
-2. **ratatui**: Terminal UI framework
+2. **petgraph**: Graph data structure library
+   - Purpose: Dependency graph management with robust algorithms
+   - Version: 0.6.x (to be added)
+   - Features: Cycle detection, topological sorting, graph traversal
+   - Used for: Model dependency tracking and execution order planning
+
+3. **ratatui**: Terminal UI framework
    - Purpose: Create interactive terminal user interfaces
    - Version: 0.29.0
    - Dependencies: crossterm (0.29.0) for terminal manipulation
 
-3. **clap**: Command-line argument parser
+4. **clap**: Command-line argument parser
    - Purpose: Process command-line arguments and options
    - Version: 4.5.37
    - Features: derive (for declarative argument definitions)
 
-4. **color-eyre**: Error handling and reporting
+5. **color-eyre**: Error handling and reporting
    - Purpose: Provide rich, colorful error reports
    - Version: 0.6.3
 
-5. **tempfile**: Temporary file and directory creation
+6. **tempfile**: Temporary file and directory creation
    - Purpose: Create temporary files and directories for testing
    - Version: 3.20.0
    - Used in: Test suite for model discovery
@@ -196,6 +202,65 @@ fn process_sql_file(file_path: &Path) -> Result<()> {
         .map_err(|e| eyre!("Failed to parse model: {}", e))?;
     
     Ok(())
+}
+```
+
+### Dependency System (Planned)
+```rust
+// Example of dependency graph usage with petgraph
+use petgraph::{Graph, Direction};
+use petgraph::algo::{is_cyclic_directed, toposort};
+
+pub struct DependencyGraph {
+    graph: Graph<String, ()>,  // Node = model qualified name, Edge = dependency
+    node_indices: HashMap<String, NodeIndex>,
+}
+
+impl DependencyGraph {
+    pub fn add_dependency(&mut self, from_model: &str, to_model: &str) -> Result<()> {
+        let from_idx = self.get_or_create_node(from_model);
+        let to_idx = self.get_or_create_node(to_model);
+        self.graph.add_edge(to_idx, from_idx, ()); // to_model → from_model (dependency direction)
+        Ok(())
+    }
+    
+    pub fn has_cycles(&self) -> bool {
+        is_cyclic_directed(&self.graph)
+    }
+    
+    pub fn execution_order(&self) -> Result<Vec<String>> {
+        toposort(&self.graph, None)
+            .map(|nodes| nodes.iter().map(|&i| self.graph[i].clone()).collect())
+            .map_err(|_| eyre!("Circular dependency detected"))
+    }
+}
+
+// Example of schema-based model identity
+pub struct ModelIdentity {
+    pub file_path: PathBuf,           // models/client/users.sql
+    pub table_name: String,           // users
+    pub schema_name: String,          // client
+    pub qualified_name: String,       // client.users
+}
+
+impl ModelIdentity {
+    pub fn from_path(file_path: PathBuf, models_root: &Path) -> Result<Self> {
+        let relative_path = file_path.strip_prefix(models_root)?;
+        let schema_name = relative_path.parent()
+            .and_then(|p| p.file_name())
+            .and_then(|n| n.to_str())
+            .ok_or_else(|| eyre!("Cannot extract schema from path"))?;
+        let table_name = file_path.file_stem()
+            .and_then(|n| n.to_str())
+            .ok_or_else(|| eyre!("Cannot extract table name from path"))?;
+        
+        Ok(ModelIdentity {
+            file_path,
+            table_name: table_name.to_string(),
+            schema_name: schema_name.to_string(),
+            qualified_name: format!("{}.{}", schema_name, table_name),
+        })
+    }
 }
 ```
 
