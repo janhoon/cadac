@@ -6,4 +6,4 @@ SELECT -- first user id comment
     --this will break shit
     email,
     created_at
-FROM orders
+FROM sources.users

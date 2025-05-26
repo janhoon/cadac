@@ -8,6 +8,7 @@ use std::fs;
 
 mod args;
 mod cli;
+mod dependency_graph;
 mod discovery;
 mod parser;
 
@@ -100,11 +101,57 @@ fn discover_models(model_path: std::path::PathBuf) -> Result<()> {
             println!("   📝 {}", description);
         }
 
-        let source_names: Vec<String> = model.sources.iter().map(|s| s.name.clone()).collect();
+        let source_names: Vec<String> = model.sources.iter().map(|s| s.id.clone()).collect();
         println!("   📊 Sources: {}", source_names.join(", "));
 
         let column_names: Vec<String> = model.columns.iter().map(|c| c.name.clone()).collect();
         println!("   📋 Columns: {}", column_names.join(", "));
+    }
+
+    // Build and display dependency graph
+    println!("\n🔗 Building dependency graph...");
+    catalog.build_dependency_graph()?;
+
+    println!("📊 Dependency Graph:");
+    println!("   Models: {}", catalog.dependency_graph.model_count());
+    println!("   Dependencies: {}", catalog.dependency_graph.dependency_count());
+
+    // Check for circular dependencies
+    if catalog.has_circular_dependencies() {
+        println!("   ⚠️  Circular dependencies detected!");
+    } else {
+        println!("   ✅ No circular dependencies");
+    }
+
+    // Show execution order
+    match catalog.get_execution_order() {
+        Ok(order) => {
+            println!("\n🚀 Execution Order:");
+            for (i, model) in order.iter().enumerate() {
+                println!("   {}. {}", i + 1, model);
+            }
+        }
+        Err(e) => {
+            println!("\n❌ Cannot determine execution order: {}", e);
+        }
+    }
+
+    // Show dependencies for each model
+    println!("\n🔍 Model Dependencies:");
+    for model_name in catalog.models.keys() {
+        let dependencies = catalog.get_dependencies(model_name);
+        let dependents = catalog.get_dependents(model_name);
+        
+        println!("   📄 {}", model_name);
+        if !dependencies.is_empty() {
+            println!("      ⬅️  Depends on: {}", dependencies.join(", "));
+        }
+        if !dependents.is_empty() {
+            println!("      ➡️  Used by: {}", dependents.join(", "));
+        }
+        if dependencies.is_empty() && dependents.is_empty() {
+            println!("      🔸 No internal dependencies");
+        }
     }
 
     Ok(())
