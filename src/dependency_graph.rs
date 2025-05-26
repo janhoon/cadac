@@ -140,10 +140,10 @@ impl DependencyGraph {
         }
     }
 
-    /// Get all models in the graph
-    pub fn get_all_models(&self) -> Vec<String> {
-        self.graph.node_weights().cloned().collect()
-    }
+    // /// Get all models in the graph
+    // pub fn get_all_models(&self) -> Vec<String> {
+    //     self.graph.node_weights().cloned().collect()
+    // }
 
     /// Get the number of models in the graph
     pub fn model_count(&self) -> usize {
