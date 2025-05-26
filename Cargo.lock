@@ -117,6 +117,7 @@ dependencies = [
  "clap",
  "color-eyre",
  "crossterm 0.29.0",
+ "petgraph",
  "ratatui",
  "tempfile",
  "tree-sitter",
@@ -396,6 +397,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "37909eebbb50d72f9059c3b6d82c0463f2ff062c9e95845c43a6c9c0355411be"
 
 [[package]]
+name = "fixedbitset"
+version = "0.5.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1d674e81391d1e1ab681a28d99df07927c6d4aa5b027d7da16ba32d1d21ecd99"
+
+[[package]]
 name = "fnv"
 version = "1.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -635,6 +642,18 @@ name = "paste"
 version = "1.0.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "57c0d7b74b563b49d38dae00a0c37d4d6de9b432382b2892f0574ddcae73fd0a"
+
+[[package]]
+name = "petgraph"
+version = "0.8.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7a98c6720655620a521dcc722d0ad66cd8afd5d86e34a89ef691c50b7b24de06"
+dependencies = [
+ "fixedbitset",
+ "hashbrown",
+ "indexmap",
+ "serde",
+]
 
 [[package]]
 name = "pin-project-lite"
@@ -996,8 +1015,8 @@ checksum = "c4013970217383f67b18aef68f6fb2e8d409bc5755227092d32efb0422ba24b8"
 
 [[package]]
 name = "tree-sitter-sql-cadac"
-version = "0.1.6"
-source = "git+https://github.com/janhoon/tree-sitter-sql?tag=v0.1.6#6f8d00a03708b71847331bb3483e7bd7a536e38d"
+version = "0.1.7"
+source = "git+https://github.com/janhoon/tree-sitter-sql?tag=v0.1.7#b34034b73c20ae6beb6eca1b4aa12fb6133632a7"
 dependencies = [
  "cc",
  "tree-sitter-language",
