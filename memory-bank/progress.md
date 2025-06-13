@@ -1,7 +1,7 @@
 # Progress: CADAC
 
 ## Current Status
-CADAC is in early development (version 0.1.0) with completed foundational components. The project has successfully implemented SQL parsing with tree-sitter and model discovery functionality, with all tests passing. The focus has now shifted to implementing the dependency system using petgraph for robust graph algorithms and schema-based folder organization.
+CADAC is in early development (version 0.1.0) with completed foundational components and dependency system. The project has successfully implemented SQL parsing with tree-sitter, model discovery functionality, and dependency tracking using petgraph, with all tests passing. The focus has now shifted to enhancing SQL parsing capabilities and implementing the terminal UI.
 
 ## What Works
 
@@ -22,6 +22,8 @@ CADAC is in early development (version 0.1.0) with completed foundational compon
 - ✅ Model catalog structure
 - ✅ Error handling for file operations
 - ✅ Support for recursive directory traversal
+- ✅ Schema-based model identity extraction from folder paths
+- ✅ Dependency graph construction and integration
 
 ### Testing Framework
 - ✅ Unit tests for parser functionality
@@ -36,13 +38,13 @@ CADAC is in early development (version 0.1.0) with completed foundational compon
 
 ## What's Left to Build
 
-### Dependency System (Priority)
-- 🔲 Add petgraph dependency to project
-- 🔲 Create ModelIdentity structure for schema-based organization
-- 🔲 Implement DependencyGraph with petgraph integration
+### Dependency System (Completed ✅)
+- ✅ Add petgraph dependency to project
+- ✅ Create ModelIdentity structure for schema-based organization
+- ✅ Implement DependencyGraph with petgraph integration
+- ✅ Add cycle detection and topological sorting
+- ✅ Implement execution order planning
 - 🔲 Build smart reference resolution (qualified vs unqualified table names)
-- 🔲 Add cycle detection and topological sorting
-- 🔲 Implement execution order planning
 
 ### Schema-Based Model Organization
 - 🔲 Update ModelCatalog to support schema.table naming
@@ -80,12 +82,10 @@ CADAC is in early development (version 0.1.0) with completed foundational compon
 - 🔲 Command to export catalog data
 
 ## Known Issues
-1. No dependency tracking between models (next priority)
-2. Schema-based folder organization not implemented
-3. Terminal UI is not yet implemented
-4. No execution order planning
-5. Limited support for complex SQL constructs
-6. No cycle detection for model dependencies
+1. Smart reference resolution for qualified vs unqualified table names needs enhancement
+2. Terminal UI is not yet implemented
+3. Limited support for complex SQL constructs
+4. Context-aware dependency resolution needs improvement
 
 ## Evolution of Project Decisions
 
@@ -119,7 +119,7 @@ CADAC is in early development (version 0.1.0) with completed foundational compon
 
 ### Milestone 2: Core Functionality (Current)
 - 🔄 Complete SQL parser with metadata extraction
-- 🔄 Model discovery with dependency tracking
+- ✅ Model discovery with dependency tracking
 - 🔲 Basic terminal UI
 - 🔲 CLI commands for basic operations
 

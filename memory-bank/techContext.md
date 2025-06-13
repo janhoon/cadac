@@ -16,7 +16,7 @@
 
 2. **petgraph**: Graph data structure library
    - Purpose: Dependency graph management with robust algorithms
-   - Version: 0.6.x (to be added)
+   - Version: 0.8.1 (implemented)
    - Features: Cycle detection, topological sorting, graph traversal
    - Used for: Model dependency tracking and execution order planning
 
@@ -59,6 +59,7 @@ cadac/
 │   ├── cli.rs           # CLI implementation
 │   ├── parser.rs        # SQL parsing logic
 │   ├── discovery.rs     # Model discovery functionality
+│   ├── dependency_graph.rs # Dependency graph implementation
 │   ├── parser_test.rs   # Tests for parser
 │   └── discovery_test.rs # Tests for discovery
 ├── Cargo.toml           # Project manifest
@@ -96,6 +97,7 @@ cadac/
 ### Direct Dependencies
 - tree-sitter: SQL parsing
 - tree-sitter-sql-cadac: Custom SQL grammar
+- petgraph: Dependency graph management
 - ratatui: Terminal UI
 - crossterm: Terminal manipulation
 - clap: Command-line argument parsing
@@ -205,7 +207,7 @@ fn process_sql_file(file_path: &Path) -> Result<()> {
 }
 ```
 
-### Dependency System (Planned)
+### Dependency System (Implemented)
 ```rust
 // Example of dependency graph usage with petgraph
 use petgraph::{Graph, Direction};

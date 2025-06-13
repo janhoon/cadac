@@ -1,41 +1,45 @@
 # Active Context: CADAC
 
 ## Current Work Focus
-The project has completed its foundational components and is now ready to implement the dependency system:
+The project has completed its foundational components and dependency system. Current focus areas:
 
-1. **Dependency System Implementation**: Building intelligent dependency tracking for SQL models using pure SQL (no templating)
-2. **Schema-Based Organization**: Implementing folder structure → schema mapping for natural database organization
-3. **Graph-Based Dependency Resolution**: Integrating petgraph library for robust dependency analysis
+1. **SQL Parsing Enhancements**: Improving table reference extraction and support for complex SQL constructs
+2. **Smart Reference Resolution**: Building intelligent qualified vs unqualified table name resolution
+3. **Terminal UI Development**: Beginning implementation of the interactive terminal interface
 
 ## Recent Changes
-- Completed SQL parser implementation with working metadata extraction
-- Finished model discovery functionality with comprehensive testing
-- All tests are now passing for parser and discovery components
-- Established architectural decisions for dependency system design
-- Decided on schema-based folder organization (models/schema/table.sql → schema.table)
-- Selected petgraph library for dependency graph management
-- Clarified pure SQL approach (no templating like dbt)
+- ✅ Completed SQL parser implementation with working metadata extraction
+- ✅ Finished model discovery functionality with comprehensive testing
+- ✅ All tests are now passing for parser and discovery components
+- ✅ Implemented complete dependency system with petgraph integration
+- ✅ Created ModelIdentity structure for schema-based organization
+- ✅ Built DependencyGraph with cycle detection and topological sorting
+- ✅ Added execution order planning and dependency analysis methods
+- ✅ Integrated dependency graph into ModelCatalog with comprehensive testing
 
 ## Next Steps
-1. **Implement Core Dependency System**
-   - Add petgraph dependency to Cargo.toml
-   - Create dependency data structures (ModelIdentity, DependencyGraph)
-   - Implement schema-based model identity resolution from folder paths
+1. **SQL Parsing Enhancements (Priority)**
+   - Enhance table reference extraction for dependency tracking
+   - Support for complex SQL constructs (joins, CTEs, subqueries)
+   - Improved handling of qualified column references
+   - Better alias handling in dependency resolution
 
 2. **Smart Reference Resolution**
-   - Enhance table reference parsing to distinguish qualified vs unqualified names
-   - Implement resolution rules: schema.table → model lookup, db.schema.table → external
-   - Add context-aware dependency matching based on current model's schema
+   - Build intelligent qualified vs unqualified table name resolution
+   - Implement context-aware dependency matching based on current model's schema
+   - Handle database-qualified references as external tables
 
-3. **Graph Construction & Analysis**
-   - Build dependency graph using petgraph with model qualified names as nodes
-   - Implement cycle detection and topological sorting for execution order
-   - Add dependency analysis methods (impact analysis, lineage tracking)
+3. **Terminal UI Development**
+   - Begin implementation of multi-view interface with ratatui
+   - Create model browser view
+   - Implement model detail view
+   - Add dependency graph visualization
 
-4. **Integration & Testing**
-   - Extend ModelCatalog with dependency graph functionality
-   - Create comprehensive tests for dependency resolution scenarios
-   - Test with complex multi-schema model structures
+4. **CLI Commands Enhancement**
+   - Command to run models in dependency order
+   - Command to generate documentation
+   - Command to query the catalog
+   - Command to export catalog data
 
 ## Active Decisions and Considerations
 
