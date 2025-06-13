@@ -90,13 +90,19 @@ impl ModelCatalog {
 
         // Create and parse the model using the qualified name
         let mut model = ModelMetadata::new(model_identity.qualified_name.clone());
-        model
-            .parse_model(&sql_content)
-            .map_err(|e| eyre!("Failed to parse model {}: {}", model_identity.qualified_name, e))?;
+        model.parse_model(&sql_content).map_err(|e| {
+            eyre!(
+                "Failed to parse model {}: {}",
+                model_identity.qualified_name,
+                e
+            )
+        })?;
 
         // Add the model and identity to the catalog
-        self.models.insert(model_identity.qualified_name.clone(), model);
-        self.model_identities.insert(model_identity.qualified_name.clone(), model_identity);
+        self.models
+            .insert(model_identity.qualified_name.clone(), model);
+        self.model_identities
+            .insert(model_identity.qualified_name.clone(), model_identity);
 
         Ok(())
     }
@@ -117,7 +123,8 @@ impl ModelCatalog {
                 // Check if the source is another model in our catalog
                 if self.models.contains_key(&source.id) {
                     // Add dependency: model_name depends on source.id
-                    self.dependency_graph.add_dependency(model_name, &source.id)?;
+                    self.dependency_graph
+                        .add_dependency(model_name, &source.id)?;
                 }
                 // Note: We ignore external dependencies (sources not in our catalog)
                 // as they represent external tables/views

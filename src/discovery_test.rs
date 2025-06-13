@@ -21,7 +21,11 @@ fn test_discover_models_in_directory() -> Result<()> {
     // Create test SQL files with schema-based organization
     create_test_sql_file(&bronze_dir, "users.sql", "SELECT a, b FROM source1")?;
     create_test_sql_file(&bronze_dir, "orders.sql", "SELECT c, d FROM source2")?;
-    create_test_sql_file(&silver_dir, "customers.sql", "SELECT e, f FROM bronze.users")?;
+    create_test_sql_file(
+        &silver_dir,
+        "customers.sql",
+        "SELECT e, f FROM bronze.users",
+    )?;
 
     // Create a non-SQL file that should be ignored
     let non_sql_path = bronze_dir.join("not_a_model.txt");
@@ -58,7 +62,10 @@ fn test_discover_models_in_directory() -> Result<()> {
 
     let silver_customers = catalog.models.get("silver.customers").unwrap();
     assert_eq!(silver_customers.sources.len(), 1);
-    assert_eq!(silver_customers.sources.iter().next().unwrap().id, "bronze.users");
+    assert_eq!(
+        silver_customers.sources.iter().next().unwrap().id,
+        "bronze.users"
+    );
 
     // Verify model identities
     let bronze_users_identity = catalog.model_identities.get("bronze.users").unwrap();
@@ -90,10 +97,16 @@ fn test_discover_models_in_directory() -> Result<()> {
     // Test execution order
     let execution_order = catalog.get_execution_order()?;
     assert!(execution_order.len() >= 2); // At least bronze.users and silver.customers
-    
+
     // bronze.users should come before silver.customers in execution order
-    let bronze_pos = execution_order.iter().position(|x| x == "bronze.users").unwrap();
-    let silver_pos = execution_order.iter().position(|x| x == "silver.customers").unwrap();
+    let bronze_pos = execution_order
+        .iter()
+        .position(|x| x == "bronze.users")
+        .unwrap();
+    let silver_pos = execution_order
+        .iter()
+        .position(|x| x == "silver.customers")
+        .unwrap();
     assert!(bronze_pos < silver_pos);
 
     // Test no circular dependencies

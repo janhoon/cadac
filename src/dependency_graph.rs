@@ -1,8 +1,8 @@
 use color_eyre::Result;
 use color_eyre::eyre::{Context, eyre};
-use petgraph::{Graph, Direction};
 use petgraph::algo::{is_cyclic_directed, toposort};
 use petgraph::graph::NodeIndex;
+use petgraph::{Direction, Graph};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
@@ -23,18 +23,24 @@ impl ModelIdentity {
     /// - models/test/test_model.sql -> schema: "test", table: "test_model"
     pub fn from_path(file_path: PathBuf, models_root: &Path) -> Result<Self> {
         // Get the relative path from models root
-        let relative_path = file_path.strip_prefix(models_root)
-            .wrap_err_with(|| format!("File path {:?} is not within models root {:?}", file_path, models_root))?;
+        let relative_path = file_path.strip_prefix(models_root).wrap_err_with(|| {
+            format!(
+                "File path {:?} is not within models root {:?}",
+                file_path, models_root
+            )
+        })?;
 
         // Extract schema name from the first directory component after models root
-        let schema_name = relative_path.components()
+        let schema_name = relative_path
+            .components()
             .next()
             .and_then(|component| component.as_os_str().to_str())
             .ok_or_else(|| eyre!("Cannot extract schema from path: {:?}", relative_path))?
             .to_string();
 
         // Extract table name from filename (without .sql extension)
-        let table_name = file_path.file_stem()
+        let table_name = file_path
+            .file_stem()
             .and_then(|n| n.to_str())
             .ok_or_else(|| eyre!("Cannot extract table name from path: {:?}", file_path))?
             .to_string();
@@ -78,7 +84,8 @@ impl DependencyGraph {
         }
 
         let node_idx = self.graph.add_node(qualified_name.to_string());
-        self.node_indices.insert(qualified_name.to_string(), node_idx);
+        self.node_indices
+            .insert(qualified_name.to_string(), node_idx);
         node_idx
     }
 
@@ -87,10 +94,10 @@ impl DependencyGraph {
     pub fn add_dependency(&mut self, from_model: &str, to_model: &str) -> Result<()> {
         let from_idx = self.add_model(from_model);
         let to_idx = self.add_model(to_model);
-        
+
         // Add edge: from_model -> to_model (from depends on to)
         self.graph.add_edge(from_idx, to_idx, ());
-        
+
         Ok(())
     }
 
@@ -112,7 +119,9 @@ impl DependencyGraph {
                 execution_order.reverse();
                 Ok(execution_order)
             }
-            Err(_) => Err(eyre!("Cannot determine execution order: circular dependency detected")),
+            Err(_) => Err(eyre!(
+                "Cannot determine execution order: circular dependency detected"
+            )),
         }
     }
 
@@ -171,14 +180,14 @@ mod tests {
     fn test_model_identity_from_path() -> Result<()> {
         let models_root = PathBuf::from("models");
         let file_path = PathBuf::from("models/bronze/users.sql");
-        
+
         let identity = ModelIdentity::from_path(file_path.clone(), &models_root)?;
-        
+
         assert_eq!(identity.file_path, file_path);
         assert_eq!(identity.table_name, "users");
         assert_eq!(identity.schema_name, "bronze");
         assert_eq!(identity.qualified_name, "bronze.users");
-        
+
         Ok(())
     }
 
@@ -187,100 +196,100 @@ mod tests {
         let models_root = PathBuf::from("models");
         let file_path = PathBuf::from("models/test/users/user_model.sql");
         let identity = ModelIdentity::from_path(file_path.clone(), &models_root)?;
-        
+
         assert_eq!(identity.table_name, "user_model");
         assert_eq!(identity.schema_name, "test");
         assert_eq!(identity.qualified_name, "test.user_model");
 
         let deeper_file_path = PathBuf::from("models/test/users/deeper/user_model.sql");
         let deeper_identity = ModelIdentity::from_path(deeper_file_path.clone(), &models_root)?;
-        
+
         assert_eq!(deeper_identity.table_name, "user_model");
         assert_eq!(deeper_identity.schema_name, "test");
         assert_eq!(deeper_identity.qualified_name, "test.user_model");
-        
+
         Ok(())
     }
 
     #[test]
     fn test_dependency_graph_basic() -> Result<()> {
         let mut graph = DependencyGraph::new();
-        
+
         // Add models
         graph.add_model("bronze.users");
         graph.add_model("gold.orders");
-        
+
         // Add dependency: gold.orders depends on bronze.users
         graph.add_dependency("gold.orders", "bronze.users")?;
-        
+
         assert_eq!(graph.model_count(), 2);
         assert_eq!(graph.dependency_count(), 1);
         assert!(!graph.has_cycles());
-        
+
         Ok(())
     }
 
     #[test]
     fn test_execution_order() -> Result<()> {
         let mut graph = DependencyGraph::new();
-        
+
         // Create a dependency chain: A -> B -> C
         graph.add_dependency("B", "A")?;
         graph.add_dependency("C", "B")?;
-        
+
         let execution_order = graph.execution_order()?;
-        
+
         // A should come first, then B, then C
         assert_eq!(execution_order, vec!["A", "B", "C"]);
-        
+
         Ok(())
     }
 
     #[test]
     fn test_cycle_detection() -> Result<()> {
         let mut graph = DependencyGraph::new();
-        
+
         // Create a cycle: A -> B -> A
         graph.add_dependency("A", "B")?;
         graph.add_dependency("B", "A")?;
-        
+
         assert!(graph.has_cycles());
         assert!(graph.execution_order().is_err());
-        
+
         Ok(())
     }
 
     #[test]
     fn test_impact_analysis() -> Result<()> {
         let mut graph = DependencyGraph::new();
-        
+
         // bronze.users <- gold.orders
         // bronze.users <- silver.customers
         graph.add_dependency("gold.orders", "bronze.users")?;
         graph.add_dependency("silver.customers", "bronze.users")?;
-        
+
         let dependents = graph.get_dependents("bronze.users");
         assert_eq!(dependents.len(), 2);
         assert!(dependents.contains(&"gold.orders".to_string()));
         assert!(dependents.contains(&"silver.customers".to_string()));
-        
+
         Ok(())
     }
 
     #[test]
     fn test_lineage_tracking() -> Result<()> {
         let mut graph = DependencyGraph::new();
-        
+
         // gold.orders -> bronze.users -> sources.users
         graph.add_dependency("gold.orders", "bronze.users")?;
         graph.add_dependency("bronze.users", "sources.users")?;
-        
+
         let dependencies = graph.get_dependencies("gold.orders");
         assert_eq!(dependencies, vec!["bronze.users"]);
-        
+
         let dependencies = graph.get_dependencies("bronze.users");
         assert_eq!(dependencies, vec!["sources.users"]);
-        
+
         Ok(())
     }
 }

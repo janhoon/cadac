@@ -114,7 +114,10 @@ fn discover_models(model_path: std::path::PathBuf) -> Result<()> {
 
     println!("📊 Dependency Graph:");
     println!("   Models: {}", catalog.dependency_graph.model_count());
-    println!("   Dependencies: {}", catalog.dependency_graph.dependency_count());
+    println!(
+        "   Dependencies: {}",
+        catalog.dependency_graph.dependency_count()
+    );
 
     // Check for circular dependencies
     if catalog.has_circular_dependencies() {
@@ -141,7 +144,7 @@ fn discover_models(model_path: std::path::PathBuf) -> Result<()> {
     for model_name in catalog.models.keys() {
         let dependencies = catalog.get_dependencies(model_name);
         let dependents = catalog.get_dependents(model_name);
-        
+
         println!("   📄 {}", model_name);
         if !dependencies.is_empty() {
             println!("      ⬅️  Depends on: {}", dependencies.join(", "));
