@@ -3,9 +3,10 @@
 ## Current Work Focus
 The project has completed its foundational components and dependency system. Current focus areas:
 
-1. **SQL Parsing Enhancements**: Improving table reference extraction and support for complex SQL constructs
-2. **Smart Reference Resolution**: Building intelligent qualified vs unqualified table name resolution
-3. **Terminal UI Development**: Beginning implementation of the interactive terminal interface
+1. **SQL Execution Engine (New Priority)**: Implementing database connection management and SQL execution capabilities for Postgres, Databricks, and Snowflake
+2. **Model Execution Orchestration**: Building the ability to run models in dependency order with upstream/downstream selection
+3. **SQL Parsing Enhancements**: Improving table reference extraction and support for complex SQL constructs
+4. **Terminal UI Development**: Beginning implementation of the interactive terminal interface
 
 ## Recent Changes
 - ✅ Completed SQL parser implementation with working metadata extraction
@@ -18,30 +19,49 @@ The project has completed its foundational components and dependency system. Cur
 - ✅ Integrated dependency graph into ModelCatalog with comprehensive testing
 
 ## Next Steps
-1. **SQL Parsing Enhancements (Priority)**
+1. **SQL Execution Engine (New Priority)**
+   - Implement database connection management for Postgres, Databricks, and Snowflake
+   - Create SQL execution engine with platform-specific adapters
+   - Build model execution orchestration in dependency order
+   - Add upstream/downstream model selection and execution capabilities
+   - Implement transaction management and rollback capabilities
+   - Add execution status tracking and logging
+   - Create dry-run mode for execution planning
+
+2. **SQL Parsing Enhancements**
    - Enhance table reference extraction for dependency tracking
    - Support for complex SQL constructs (joins, CTEs, subqueries)
    - Improved handling of qualified column references
    - Better alias handling in dependency resolution
 
-2. **Smart Reference Resolution**
+3. **Smart Reference Resolution**
    - Build intelligent qualified vs unqualified table name resolution
    - Implement context-aware dependency matching based on current model's schema
    - Handle database-qualified references as external tables
 
-3. **Terminal UI Development**
+4. **CLI Commands Enhancement**
+   - Command to run models with upstream/downstream options
+   - Command to generate documentation
+   - Command to query the catalog
+   - Command to export catalog data
+
+5. **Terminal UI Development**
    - Begin implementation of multi-view interface with ratatui
    - Create model browser view
    - Implement model detail view
    - Add dependency graph visualization
 
-4. **CLI Commands Enhancement**
-   - Command to run models in dependency order
-   - Command to generate documentation
-   - Command to query the catalog
-   - Command to export catalog data
-
 ## Active Decisions and Considerations
+
+### SQL Execution Architecture (New)
+- Multi-database support: Postgres, Databricks, Snowflake
+- Platform-specific adapters for handling SQL dialect differences
+- Connection management with environment-based configuration
+- Model execution orchestration using dependency graph
+- Upstream/downstream model selection for targeted execution
+- Transaction management for rollback capabilities
+- Execution status tracking and comprehensive logging
+- Dry-run mode for execution planning and validation
 
 ### Dependency System Architecture
 - Using petgraph library for robust graph algorithms (cycle detection, topological sort)

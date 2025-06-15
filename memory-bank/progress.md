@@ -1,7 +1,7 @@
 # Progress: CADAC
 
 ## Current Status
-CADAC is in early development (version 0.1.0) with completed foundational components and dependency system. The project has successfully implemented SQL parsing with tree-sitter, model discovery functionality, and dependency tracking using petgraph, with all tests passing. The focus has now shifted to enhancing SQL parsing capabilities and implementing the terminal UI.
+CADAC is in early development (version 0.1.0) with completed foundational components and dependency system. The project has successfully implemented SQL parsing with tree-sitter, model discovery functionality, and dependency tracking using petgraph, with all tests passing. The focus has now shifted to implementing SQL execution capabilities across multiple database platforms (Postgres, Databricks, Snowflake) and enhancing the terminal UI.
 
 ## What Works
 
@@ -75,8 +75,18 @@ CADAC is in early development (version 0.1.0) with completed foundational compon
 - 🔲 Metadata search capabilities
 - 🔲 Export functionality
 
+### SQL Execution Engine (New Priority)
+- 🔲 Database connection management (Postgres, Databricks, Snowflake)
+- 🔲 SQL execution engine with platform-specific adapters
+- 🔲 Model execution in dependency order
+- 🔲 Upstream/downstream model selection and execution
+- 🔲 Transaction management and rollback capabilities
+- 🔲 Execution status tracking and logging
+- 🔲 Error handling for failed model executions
+- 🔲 Dry-run mode for execution planning
+
 ### CLI Commands
-- 🔲 Command to run models
+- 🔲 Command to run models (with upstream/downstream options)
 - 🔲 Command to generate documentation
 - 🔲 Command to query the catalog
 - 🔲 Command to export catalog data

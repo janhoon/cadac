@@ -20,21 +20,27 @@
    - Features: Cycle detection, topological sorting, graph traversal
    - Used for: Model dependency tracking and execution order planning
 
-3. **ratatui**: Terminal UI framework
+3. **Database Drivers** (Planned)
+   - **tokio-postgres**: Async PostgreSQL driver
+   - **databricks-sql-connector**: Databricks SQL connector
+   - **snowflake-connector**: Snowflake database connector
+   - Purpose: Multi-database support for SQL execution
+
+4. **ratatui**: Terminal UI framework
    - Purpose: Create interactive terminal user interfaces
    - Version: 0.29.0
    - Dependencies: crossterm (0.29.0) for terminal manipulation
 
-4. **clap**: Command-line argument parser
+5. **clap**: Command-line argument parser
    - Purpose: Process command-line arguments and options
    - Version: 4.5.37
    - Features: derive (for declarative argument definitions)
 
-5. **color-eyre**: Error handling and reporting
+6. **color-eyre**: Error handling and reporting
    - Purpose: Provide rich, colorful error reports
    - Version: 0.6.3
 
-6. **tempfile**: Temporary file and directory creation
+7. **tempfile**: Temporary file and directory creation
    - Purpose: Create temporary files and directories for testing
    - Version: 3.20.0
    - Used in: Test suite for model discovery
@@ -89,8 +95,9 @@ cadac/
 ### Security Considerations
 - Safe handling of user-provided SQL queries
 - Proper error handling to prevent crashes or undefined behavior
-- No execution of SQL queries (parsing only)
+- Secure SQL execution with proper connection management
 - Safe file system operations during model discovery
+- Database credential management and secure connection handling
 
 ## Dependencies
 
@@ -264,6 +271,156 @@ impl ModelIdentity {
         })
     }
 }
+```
+
+### SQL Execution Engine (Planned)
+```rust
+// Example of SQL execution with multi-database support
+use cadac::execution::{DatabaseAdapter, ExecutionEngine, ExecutionPlan};
+
+// Database adapter trait for different platforms
+pub trait DatabaseAdapter {
+    async fn connect(&self, connection_string: &str) -> Result<Box<dyn Connection>>;
+    async fn execute_sql(&self, connection: &dyn Connection, sql: &str) -> Result<ExecutionResult>;
+    fn dialect(&self) -> SqlDialect;
+}
+
+// Execution engine for orchestrating model runs
+pub struct ExecutionEngine {
+    adapters: HashMap<DatabaseType, Box<dyn DatabaseAdapter>>,
+    catalog: ModelCatalog,
+}
+
+impl ExecutionEngine {
+    pub async fn run_model(&self, model_name: &str, options: RunOptions) -> Result<ExecutionResult> {
+        // Get execution plan based on dependencies
+        let plan = self.create_execution_plan(model_name, &options)?;
+        
+        // Execute models in dependency order
+        for model in plan.execution_order {
+            let sql = self.catalog.get_model_sql(&model)?;
+            let adapter = self.get_adapter_for_model(&model)?;
+            
+            match adapter.execute_sql(&connection, &sql).await {
+                Ok(result) => {
+                    println!("✅ Model {} executed successfully", model);
+                    self.log_execution_success(&model, &result);
+                },
+                Err(err) => {
+                    eprintln!("❌ Model {} failed: {}", model, err);
+                    if options.fail_fast {
+                        return Err(err);
+                    }
+                }
+            }
+        }
+        
+        Ok(ExecutionResult::Success)
+    }
+    
+    pub fn create_execution_plan(&self, model_name: &str, options: &RunOptions) -> Result<ExecutionPlan> {
+        let mut models_to_run = vec![model_name.to_string()];
+        
+        // Add upstream dependencies if requested
+        if options.include_upstream {
+            let upstream = self.catalog.get_dependencies(model_name);
+            models_to_run.extend(upstream);
+        }
+        
+        // Add downstream dependents if requested
+        if options.include_downstream {
+            let downstream = self.catalog.get_dependents(model_name);
+            models_to_run.extend(downstream);
+        }
+        
+        // Get execution order respecting dependencies
+        let execution_order = self.catalog.get_execution_order_for_models(&models_to_run)?;
+        
+        Ok(ExecutionPlan {
+            models: models_to_run,
+            execution_order,
+            dry_run: options.dry_run,
+        })
+    }
+}
+
+// Run options for model execution
+#[derive(Debug, Clone)]
+pub struct RunOptions {
+    pub include_upstream: bool,
+    pub include_downstream: bool,
+    pub dry_run: bool,
+    pub fail_fast: bool,
+    pub target_database: Option<String>,
+}
+
+// CLI command for running models
+#[derive(Parser, Debug)]
+pub struct RunCommand {
+    /// Model name to run
+    model_name: String,
+    
+    /// Include upstream dependencies
+    #[arg(short = 'u', long)]
+    upstream: bool,
+    
+    /// Include downstream dependents
+    #[arg(short = 'd', long)]
+    downstream: bool,
+    
+    /// Dry run (show execution plan without running)
+    #[arg(long)]
+    dry_run: bool,
+    
+    /// Fail fast on first error
+    #[arg(long)]
+    fail_fast: bool,
+    
+    /// Target database connection
+    #[arg(short = 't', long)]
+    target: Option<String>,
+}
+
+// Database-specific adapters
+pub struct PostgresAdapter {
+    pool: tokio_postgres::Pool,
+}
+
+impl DatabaseAdapter for PostgresAdapter {
+    async fn connect(&self, connection_string: &str) -> Result<Box<dyn Connection>> {
+        let (client, connection) = tokio_postgres::connect(connection_string, NoTls).await?;
+        
+        // Spawn connection task
+        tokio::spawn(async move {
+            if let Err(e) = connection.await {
+                eprintln!("Connection error: {}", e);
+            }
+        });
+        
+        Ok(Box::new(PostgresConnection { client }))
+    }
+    
+    async fn execute_sql(&self, connection: &dyn Connection, sql: &str) -> Result<ExecutionResult> {
+        let pg_conn = connection.as_any().downcast_ref::<PostgresConnection>()
+            .ok_or_else(|| eyre!("Invalid connection type for Postgres adapter"))?;
+        
+        let rows = pg_conn.client.execute(sql, &[]).await?;
+        
+        Ok(ExecutionResult {
+            rows_affected: rows,
+            execution_time: std::time::Duration::from_millis(0), // TODO: measure time
+            status: ExecutionStatus::Success,
+        })
+    }
+    
+    fn dialect(&self) -> SqlDialect {
+        SqlDialect::Postgres
+    }
+}
+
+// Similar adapters for Databricks and Snowflake...
+pub struct DatabricksAdapter { /* ... */ }
+pub struct SnowflakeAdapter { /* ... */ }
 ```
 
 ### Testing

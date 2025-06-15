@@ -41,9 +41,11 @@ CADAC automatically identifies dependencies between models by analyzing SQL quer
 - **Model Discovery**: Automatically find and catalog SQL models from directories
 - **Model Metadata**: Capture information about data models, columns, and sources
 - **Dependency Tracking**: Identify and manage relationships between models
+- **SQL Execution**: Execute models in correct dependency order across multiple database platforms
+- **Multi-Database Support**: Support for Postgres, Databricks, and Snowflake
+- **Upstream/Downstream Execution**: Run models with their dependencies or dependents
 - **Terminal UI**: Provide an intuitive interface for interacting with the catalog
 - **Command-line Interface**: Enable scripting and automation through CLI commands
-- **Model Execution**: Run models in the correct dependency order
 
 ### User Experience Goals
 - **Simplicity**: Make it easy to catalog and document data transformations
