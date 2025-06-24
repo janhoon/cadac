@@ -6,16 +6,27 @@
 flowchart TD
     CLI[CLI Interface] --> Parser[SQL Parser]
     CLI --> Discovery[Model Discovery]
+    CLI --> ExecutionEngine[Execution Engine]
     CLI --> TUI[Terminal UI]
     Parser --> ModelMetadata[Model Metadata]
     Discovery --> ModelCatalog[Model Catalog]
     ModelMetadata --> ModelCatalog
-    ModelCatalog --> DependencyResolver[Dependency Resolver]
-    DependencyResolver --> DependencyGraph[Dependency Graph - petgraph]
-    DependencyGraph --> ExecutionPlanner[Execution Planner]
+    ModelCatalog --> DependencyGraph[Dependency Graph - petgraph]
+    DependencyGraph --> ExecutionEngine
+    ExecutionEngine --> DatabaseAdapters[Database Adapters]
     TUI --> ModelCatalog
     TUI --> DependencyGraph
-    TUI --> ExecutionPlanner
+    TUI --> ExecutionEngine
+    
+    subgraph "Database Adapters"
+        PostgresAdapter[PostgreSQL Adapter ✅]
+        DatabricksAdapter[Databricks Adapter 🔲]
+        SnowflakeAdapter[Snowflake Adapter 🔲]
+    end
+    
+    DatabaseAdapters --> PostgresAdapter
+    DatabaseAdapters --> DatabricksAdapter
+    DatabaseAdapters --> SnowflakeAdapter
     
     subgraph "Schema-Based Organization"
         SchemaA[models/client/]
@@ -30,13 +41,15 @@ flowchart TD
 
 ### Core Components
 
-1. **CLI Interface**: Entry point for the application, handles command-line arguments and user input
-2. **SQL Parser**: Uses tree-sitter to parse SQL queries and extract metadata
-3. **Model Metadata**: Structures for representing data models, columns, and sources
-4. **Model Discovery**: Finds SQL files and builds a catalog of models
-5. **Model Catalog**: Repository of data models and their metadata
-6. **Dependency Graph**: Represents relationships between models
-7. **Terminal UI**: Interactive interface for exploring and managing the data catalog
+1. **CLI Interface**: Entry point for the application, handles command-line arguments and user input ✅
+2. **SQL Parser**: Uses tree-sitter to parse SQL queries and extract metadata ✅
+3. **Model Metadata**: Structures for representing data models, columns, and sources ✅
+4. **Model Discovery**: Finds SQL files and builds a catalog of models ✅
+5. **Model Catalog**: Repository of data models and their metadata ✅
+6. **Dependency Graph**: Represents relationships between models using petgraph ✅
+7. **Execution Engine**: Orchestrates SQL execution across multiple database platforms 🔄
+8. **Database Adapters**: Platform-specific adapters for PostgreSQL, Databricks, Snowflake 🔄
+9. **Terminal UI**: Interactive interface for exploring and managing the data catalog 🔲
 
 ## Key Technical Decisions
 
@@ -74,23 +87,43 @@ flowchart TD
 - **Decision**: Use petgraph library for dependency graph algorithms
 - **Rationale**: Proven, battle-tested graph algorithms instead of rolling our own
 - **Impact**: Robust cycle detection, topological sorting, and graph traversal
-- **Current Status**: Selected for implementation, not yet integrated
+- **Current Status**: Fully implemented and integrated ✅
 
 ### 7. Schema-Based Folder Organization
 - **Decision**: Map folder structure to database schema (models/schema/table.sql → schema.table)
 - **Rationale**: Natural organization that mirrors database structure, environment portability
 - **Impact**: Clean SQL with no templating, automatic schema inference from file location
-- **Current Status**: Architectural decision made, implementation pending
+- **Current Status**: Implemented with ModelIdentity structure ✅
 
 ### 8. Pure SQL Approach
 - **Decision**: Support only standard SQL with no templating or special syntax
 - **Rationale**: Avoid dbt-style templating, keep SQL readable and portable
 - **Impact**: Dependency resolution through intelligent parsing, not template references
-- **Current Status**: Core principle established, guides all implementation decisions
+- **Current Status**: Core principle established, guides all implementation decisions ✅
+
+### 9. Async Database Execution
+- **Decision**: Use async traits and tokio for database operations
+- **Rationale**: Enable concurrent execution and better resource utilization
+- **Impact**: Non-blocking database operations, better performance for model execution
+- **Current Status**: Foundation implemented with PostgreSQL adapter ✅
 
 ## Design Patterns in Use
 
-### 1. Trait-based Polymorphism
+### 1. Async Trait Pattern
+- **Pattern**: Define async behavior through traits with async-trait
+- **Implementation**: `DatabaseAdapter` and `DatabaseConnection` traits for database operations
+- **Benefits**: Enables polymorphic async database operations across different platforms
+- **Example**:
+  ```rust
+  #[async_trait::async_trait]
+  pub trait DatabaseAdapter: Send + Sync {
+      async fn connect(&self, connection_string: &str) -> Result<Box<dyn DatabaseConnection>>;
+      fn dialect(&self) -> SqlDialect;
+      fn validate_connection_string(&self, connection_string: &str) -> Result<()>;
+  }
+  ```
+
+### 3. Trait-based Polymorphism
 - **Pattern**: Define behavior through traits (e.g., `ModelParser`)
 - **Implementation**: The `ModelParser` trait defines the interface for parsing SQL models
 - **Benefits**: Enables flexible implementation of parsing logic and potential for alternative parsers
@@ -107,7 +140,7 @@ flowchart TD
   }
   ```
 
-### 2. Builder Pattern
+### 4. Builder Pattern
 - **Pattern**: Construct complex objects step by step
 - **Implementation**: `ModelMetadata` is built incrementally during SQL parsing
 - **Benefits**: Simplifies construction of complex metadata structures from parsed SQL
@@ -127,7 +160,7 @@ flowchart TD
   }
   ```
 
-### 3. Visitor Pattern
+### 5. Visitor Pattern
 - **Pattern**: Separate algorithms from object structures
 - **Implementation**: Tree traversal in the SQL parser visits nodes and processes them based on type
 - **Benefits**: Cleanly separates node traversal from node processing logic
@@ -145,7 +178,7 @@ flowchart TD
   }
   ```
 
-### 4. Repository Pattern
+### 6. Repository Pattern
 - **Pattern**: Centralize data access logic
 - **Implementation**: `ModelCatalog` manages a collection of models
 - **Benefits**: Provides a clean API for model discovery and management
@@ -163,7 +196,7 @@ flowchart TD
   }
   ```
 
-### 5. Error Type Pattern
+### 7. Error Type Pattern
 - **Pattern**: Define domain-specific error types
 - **Implementation**: `ModelParseError` enum with variants for different error cases
 - **Benefits**: Provides clear, typed error handling
@@ -192,9 +225,16 @@ flowchart TD
 - Catalog provides access to all discovered models
 
 ### Model Catalog and Dependency Graph
-- Catalog contains all discovered models
-- Dependency graph is built from source/target relationships in models
-- Graph represents the execution order for models
+- Catalog contains all discovered models ✅
+- Dependency graph is built from source/target relationships in models ✅
+- Graph represents the execution order for models ✅
+- Graph provides cycle detection and topological sorting ✅
+
+### Execution Engine and Database Adapters
+- Execution engine orchestrates SQL execution across multiple platforms ✅
+- Database adapters provide platform-specific connection and execution logic ✅
+- PostgreSQL adapter fully implemented with async operations ✅
+- Databricks and Snowflake adapters are placeholders for future implementation 🔲
 
 ### CLI and Terminal UI
 - CLI processes command-line arguments
@@ -219,18 +259,28 @@ flowchart TD
    d. Add model to catalog
 3. Build dependency graph from model relationships
 
-### Dependency Tracking Flow (Planned)
+### Dependency Tracking Flow (Implemented)
 1. For each model in the catalog:
-   a. Identify source tables referenced in the model
-   b. Match source tables to other models in the catalog
-   c. Create directed edges in the dependency graph
-2. Validate the graph for cycles or missing dependencies
-3. Determine execution order based on dependencies
+   a. Identify source tables referenced in the model ✅
+   b. Match source tables to other models in the catalog ✅
+   c. Create directed edges in the dependency graph ✅
+2. Validate the graph for cycles or missing dependencies ✅
+3. Determine execution order based on dependencies ✅
+4. Provide impact analysis and lineage tracking ✅
+
+### SQL Execution Flow (In Progress)
+1. Parse command-line arguments for model execution ✅
+2. Load model catalog and build dependency graph ✅
+3. Determine execution order based on dependencies ✅
+4. Connect to target database using appropriate adapter 🔄
+5. Execute models in dependency order 🔲
+6. Track execution results and handle errors 🔲
+7. Report execution status and results 🔲
 
 ### User Interaction Flow (Planned)
-1. Process command-line arguments
-2. Initialize the terminal UI
-3. Render the model catalog and dependency graph
-4. Handle user input events for navigation and selection
-5. Execute selected models based on dependencies
-6. Update the display with execution results
+1. Process command-line arguments ✅
+2. Initialize the terminal UI 🔲
+3. Render the model catalog and dependency graph 🔲
+4. Handle user input events for navigation and selection 🔲
+5. Execute selected models based on dependencies 🔲
+6. Update the display with execution results 🔲

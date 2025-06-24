@@ -29,23 +29,23 @@ CADAC automatically identifies dependencies between models by analyzing SQL quer
 ## How It Should Work
 
 ### User Experience Flow
-1. **Discovery**: CADAC scans directories to find SQL model files
-2. **Analysis**: The tool parses SQL using tree-sitter to extract metadata
-3. **Dependency Mapping**: Dependencies between models are identified and mapped
-4. **Cataloging**: Extracted information is organized into a structured catalog
-5. **Visualization**: Users interact with the catalog through a terminal UI
-6. **Execution**: Models can be run in the correct dependency order
+1. **Discovery**: CADAC scans directories to find SQL model files ✅
+2. **Analysis**: The tool parses SQL using tree-sitter to extract metadata ✅
+3. **Dependency Mapping**: Dependencies between models are identified and mapped ✅
+4. **Cataloging**: Extracted information is organized into a structured catalog ✅
+5. **Execution**: Models can be run in the correct dependency order 🔄
+6. **Visualization**: Users interact with the catalog through a terminal UI 🔲
 
 ### Key Features
-- **SQL Parsing**: Extract metadata from SQL queries using tree-sitter
-- **Model Discovery**: Automatically find and catalog SQL models from directories
-- **Model Metadata**: Capture information about data models, columns, and sources
-- **Dependency Tracking**: Identify and manage relationships between models
-- **SQL Execution**: Execute models in correct dependency order across multiple database platforms
-- **Multi-Database Support**: Support for Postgres, Databricks, and Snowflake
-- **Upstream/Downstream Execution**: Run models with their dependencies or dependents
-- **Terminal UI**: Provide an intuitive interface for interacting with the catalog
-- **Command-line Interface**: Enable scripting and automation through CLI commands
+- **SQL Parsing**: Extract metadata from SQL queries using tree-sitter ✅
+- **Model Discovery**: Automatically find and catalog SQL models from directories ✅
+- **Model Metadata**: Capture information about data models, columns, and sources ✅
+- **Dependency Tracking**: Identify and manage relationships between models ✅
+- **SQL Execution**: Execute models in correct dependency order across multiple database platforms 🔄
+- **Multi-Database Support**: Support for Postgres (✅), Databricks (🔲 future), and Snowflake (🔲 future)
+- **Upstream/Downstream Execution**: Run models with their dependencies or dependents 🔲
+- **Terminal UI**: Provide an intuitive interface for interacting with the catalog 🔲
+- **Command-line Interface**: Enable scripting and automation through CLI commands 🔄
 
 ### User Experience Goals
 - **Simplicity**: Make it easy to catalog and document data transformations

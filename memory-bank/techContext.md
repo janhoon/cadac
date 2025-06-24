@@ -20,10 +20,11 @@
    - Features: Cycle detection, topological sorting, graph traversal
    - Used for: Model dependency tracking and execution order planning
 
-3. **Database Drivers** (Planned)
-   - **tokio-postgres**: Async PostgreSQL driver
-   - **databricks-sql-connector**: Databricks SQL connector
-   - **snowflake-connector**: Snowflake database connector
+3. **Database Drivers** (In Progress)
+   - **tokio-postgres**: Async PostgreSQL driver (implemented)
+   - **async-trait**: Async trait support for database adapters (v0.1.83)
+   - **databricks-sql-connector**: Databricks SQL connector (planned)
+   - **snowflake-connector**: Snowflake database connector (planned)
    - Purpose: Multi-database support for SQL execution
 
 4. **ratatui**: Terminal UI framework
@@ -66,8 +67,14 @@ cadac/
 │   ├── parser.rs        # SQL parsing logic
 │   ├── discovery.rs     # Model discovery functionality
 │   ├── dependency_graph.rs # Dependency graph implementation
+│   ├── execution/       # SQL execution engine
+│   │   ├── mod.rs       # Execution engine core
+│   │   ├── postgres.rs  # PostgreSQL adapter
+│   │   ├── databricks.rs # Databricks adapter (placeholder)
+│   │   └── snowflake.rs # Snowflake adapter (placeholder)
 │   ├── parser_test.rs   # Tests for parser
-│   └── discovery_test.rs # Tests for discovery
+│   ├── discovery_test.rs # Tests for discovery
+│   └── execution_test.rs # Tests for execution engine
 ├── Cargo.toml           # Project manifest
 ├── Cargo.lock           # Dependency lock file
 └── README.md            # Project documentation
@@ -103,13 +110,17 @@ cadac/
 
 ### Direct Dependencies
 - tree-sitter: SQL parsing
-- tree-sitter-sql-cadac: Custom SQL grammar
+- tree-sitter-sql-cadac: Custom SQL grammar (v0.1.7)
 - petgraph: Dependency graph management
 - ratatui: Terminal UI
 - crossterm: Terminal manipulation
 - clap: Command-line argument parsing
 - color-eyre: Error handling
 - tempfile: Temporary file creation for tests
+- async-trait: Async trait support for database adapters
+- tokio-postgres: PostgreSQL async driver (optional, postgres feature)
+- tokio: Async runtime (optional, postgres feature)
+- testcontainers-modules: PostgreSQL test containers (optional, postgres feature)
 
 ### Development Dependencies
 - cc: Native code compilation
@@ -273,49 +284,63 @@ impl ModelIdentity {
 }
 ```
 
-### SQL Execution Engine (Planned)
+### SQL Execution Engine (Implemented Foundation)
 ```rust
 // Example of SQL execution with multi-database support
-use cadac::execution::{DatabaseAdapter, ExecutionEngine, ExecutionPlan};
+use cadac::execution::{DatabaseAdapter, ExecutionEngine, ExecutionResult, SqlDialect};
 
-// Database adapter trait for different platforms
-pub trait DatabaseAdapter {
-    async fn connect(&self, connection_string: &str) -> Result<Box<dyn Connection>>;
-    async fn execute_sql(&self, connection: &dyn Connection, sql: &str) -> Result<ExecutionResult>;
+// Database adapter trait for different platforms (implemented)
+#[async_trait::async_trait]
+pub trait DatabaseAdapter: Send + Sync {
+    async fn connect(&self, connection_string: &str) -> Result<Box<dyn DatabaseConnection>>;
     fn dialect(&self) -> SqlDialect;
+    fn validate_connection_string(&self, connection_string: &str) -> Result<()>;
 }
 
-// Execution engine for orchestrating model runs
+// Database connection trait for abstracting different database types
+#[async_trait::async_trait]
+pub trait DatabaseConnection: Send + Sync {
+    async fn execute_sql(&self, sql: &str) -> Result<ExecutionResult>;
+    fn dialect(&self) -> SqlDialect;
+    async fn close(&self) -> Result<()>;
+}
+
+// Execution engine for orchestrating model runs (implemented foundation)
 pub struct ExecutionEngine {
-    adapters: HashMap<DatabaseType, Box<dyn DatabaseAdapter>>,
-    catalog: ModelCatalog,
+    adapters: HashMap<SqlDialect, Box<dyn DatabaseAdapter>>,
 }
 
 impl ExecutionEngine {
-    pub async fn run_model(&self, model_name: &str, options: RunOptions) -> Result<ExecutionResult> {
-        // Get execution plan based on dependencies
-        let plan = self.create_execution_plan(model_name, &options)?;
-        
-        // Execute models in dependency order
-        for model in plan.execution_order {
-            let sql = self.catalog.get_model_sql(&model)?;
-            let adapter = self.get_adapter_for_model(&model)?;
-            
-            match adapter.execute_sql(&connection, &sql).await {
-                Ok(result) => {
-                    println!("✅ Model {} executed successfully", model);
-                    self.log_execution_success(&model, &result);
-                },
-                Err(err) => {
-                    eprintln!("❌ Model {} failed: {}", model, err);
-                    if options.fail_fast {
-                        return Err(err);
-                    }
-                }
-            }
-        }
-        
-        Ok(ExecutionResult::Success)
+    pub fn new() -> Self {
+        let adapters: HashMap<SqlDialect, Box<dyn DatabaseAdapter>> = HashMap::new();
+        Self { adapters }
+    }
+
+    /// Register a database adapter for a specific dialect
+    pub fn register_adapter(&mut self, dialect: SqlDialect, adapter: Box<dyn DatabaseAdapter>) {
+        self.adapters.insert(dialect, adapter);
+    }
+
+    /// Execute SQL using the specified dialect
+    pub async fn execute_sql(
+        &self,
+        sql: &str,
+        connection_string: &str,
+        dialect: SqlDialect,
+    ) -> Result<ExecutionResult> {
+        let adapter = self.adapters.get(&dialect)
+            .ok_or_else(|| color_eyre::eyre::eyre!(
+                "No adapter found for dialect: {:?}. Available dialects: {:?}", 
+                dialect, 
+                self.available_dialects()
+            ))?;
+
+        adapter.validate_connection_string(connection_string)?;
+        let connection = adapter.connect(connection_string).await?;
+        let result = connection.execute_sql(sql).await?;
+        connection.close().await?;
+
+        Ok(result)
     }
     
     pub fn create_execution_plan(&self, model_name: &str, options: &RunOptions) -> Result<ExecutionPlan> {
@@ -381,40 +406,36 @@ pub struct RunCommand {
     target: Option<String>,
 }
 
-// Database-specific adapters
-pub struct PostgresAdapter {
-    pool: tokio_postgres::Pool,
-}
+// Database-specific adapters (PostgreSQL implemented)
+pub struct PostgresAdapter;
 
+#[async_trait::async_trait]
 impl DatabaseAdapter for PostgresAdapter {
-    async fn connect(&self, connection_string: &str) -> Result<Box<dyn Connection>> {
+    async fn connect(&self, connection_string: &str) -> Result<Box<dyn DatabaseConnection>> {
         let (client, connection) = tokio_postgres::connect(connection_string, NoTls).await?;
         
-        // Spawn connection task
+        // Spawn the connection task
         tokio::spawn(async move {
             if let Err(e) = connection.await {
-                eprintln!("Connection error: {}", e);
+                eprintln!("PostgreSQL connection error: {}", e);
             }
         });
-        
+
         Ok(Box::new(PostgresConnection { client }))
     }
-    
-    async fn execute_sql(&self, connection: &dyn Connection, sql: &str) -> Result<ExecutionResult> {
-        let pg_conn = connection.as_any().downcast_ref::<PostgresConnection>()
-            .ok_or_else(|| eyre!("Invalid connection type for Postgres adapter"))?;
-        
-        let rows = pg_conn.client.execute(sql, &[]).await?;
-        
-        Ok(ExecutionResult {
-            rows_affected: rows,
-            execution_time: std::time::Duration::from_millis(0), // TODO: measure time
-            status: ExecutionStatus::Success,
-        })
-    }
-    
+
     fn dialect(&self) -> SqlDialect {
         SqlDialect::Postgres
+    }
+
+    fn validate_connection_string(&self, connection_string: &str) -> Result<()> {
+        // Basic validation for PostgreSQL connection string
+        if !connection_string.starts_with("postgresql://") && !connection_string.starts_with("postgres://") {
+            return Err(color_eyre::eyre::eyre!(
+                "Invalid PostgreSQL connection string. Must start with 'postgresql://' or 'postgres://'"
+            ));
+        }
+        Ok(())
     }
 }
 

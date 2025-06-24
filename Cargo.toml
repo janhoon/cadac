@@ -12,6 +12,19 @@ tree-sitter = "0.25.3"
 tree-sitter-sql-cadac = { git = "https://github.com/janhoon/tree-sitter-sql", tag = "v0.1.7" }
 tempfile = "3.20.0"
 petgraph = "0.8.1"
+async-trait = "0.1.83"
+
+# Optional database adapters
+tokio-postgres = { version = "0.7.12", optional = true }
+tokio = { version = "1.0", features = ["full"], optional = true }
+testcontainers-modules = { version = "0.12.1", features = ["postgres"], optional = true }
+
+[features]
+default = []
+postgres = ["tokio-postgres", "tokio", "testcontainers-modules"]
+databricks = []  # Will add databricks-specific deps later
+snowflake = []   # Will add snowflake-specific deps later
+all-databases = ["postgres", "databricks", "snowflake"]
 
 [build-dependencies]
 cc = "*"

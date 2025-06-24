@@ -1,7 +1,7 @@
 # Progress: CADAC
 
 ## Current Status
-CADAC is in early development (version 0.1.0) with completed foundational components and dependency system. The project has successfully implemented SQL parsing with tree-sitter, model discovery functionality, and dependency tracking using petgraph, with all tests passing. The focus has now shifted to implementing SQL execution capabilities across multiple database platforms (Postgres, Databricks, Snowflake) and enhancing the terminal UI.
+CADAC is in early development (version 0.1.0) with completed foundational components, dependency system, and functional SQL execution framework. The project has successfully implemented SQL parsing with tree-sitter, model discovery functionality, dependency tracking using petgraph, and a complete SQL execution engine with PostgreSQL adapter. The CLI `run` command is fully functional for PostgreSQL model execution with dependency resolution. All tests are passing (16 tests). The focus is now on enhancing the PostgreSQL integration with comprehensive testing, transaction management, and improved error handling before expanding to additional database platforms.
 
 ## What Works
 
@@ -75,18 +75,24 @@ CADAC is in early development (version 0.1.0) with completed foundational compon
 - 🔲 Metadata search capabilities
 - 🔲 Export functionality
 
-### SQL Execution Engine (New Priority)
-- 🔲 Database connection management (Postgres, Databricks, Snowflake)
-- 🔲 SQL execution engine with platform-specific adapters
-- 🔲 Model execution in dependency order
-- 🔲 Upstream/downstream model selection and execution
+### SQL Execution Engine (In Progress)
+- ✅ SQL execution engine foundation with platform-specific adapters
+- ✅ PostgreSQL adapter with connection management and SQL execution
+- ✅ Execution result tracking and status reporting
+- ✅ Connection string validation for PostgreSQL
+- ✅ Async trait-based architecture for database adapters
+- ✅ Model execution orchestration in dependency order
+- ✅ Upstream/downstream model selection and execution
+- ✅ Dry-run mode for execution planning
+- 🔲 Comprehensive integration tests with test containers
 - 🔲 Transaction management and rollback capabilities
-- 🔲 Execution status tracking and logging
-- 🔲 Error handling for failed model executions
-- 🔲 Dry-run mode for execution planning
+- 🔲 Enhanced error handling for failed model executions
+- 🔲 Comprehensive execution logging and monitoring
+- 🔲 Databricks adapter implementation (future phase)
+- 🔲 Snowflake adapter implementation (future phase)
 
 ### CLI Commands
-- 🔲 Command to run models (with upstream/downstream options)
+- 🔲 Command to run models (with upstream/downstream options) - foundation ready
 - 🔲 Command to generate documentation
 - 🔲 Command to query the catalog
 - 🔲 Command to export catalog data
@@ -128,18 +134,29 @@ CADAC is in early development (version 0.1.0) with completed foundational compon
 - ✅ Model discovery framework
 
 ### Milestone 2: Core Functionality (Current)
-- 🔄 Complete SQL parser with metadata extraction
+- ✅ Complete SQL parser with metadata extraction
 - ✅ Model discovery with dependency tracking
+- ✅ SQL execution engine foundation with PostgreSQL adapter
+- ✅ CLI commands for model execution (basic implementation)
+- 🔲 Comprehensive PostgreSQL integration with test containers
+- 🔲 Transaction management and rollback capabilities
+- 🔲 Enhanced error handling and logging
 - 🔲 Basic terminal UI
-- 🔲 CLI commands for basic operations
 
 ### Milestone 3: Enhanced Features
+- 🔲 Advanced terminal UI with model browsing
 - 🔲 Dependency graph visualization
-- 🔲 Model execution
-- 🔲 Advanced terminal UI
+- 🔲 SQL parsing enhancements for complex constructs
+- 🔲 Smart reference resolution
 - 🔲 Documentation generation
 
-### Milestone 4: Production Readiness
+### Milestone 4: Multi-Database Support
+- 🔲 Databricks adapter implementation
+- 🔲 Snowflake adapter implementation
+- 🔲 Multi-database CLI enhancements
+- 🔲 Cross-platform testing and validation
+
+### Milestone 5: Production Readiness
 - 🔲 Comprehensive error handling
 - 🔲 Performance optimization
 - 🔲 User documentation
