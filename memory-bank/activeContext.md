@@ -1,14 +1,13 @@
 # Active Context: CADAC
 
 ## Current Work Focus
-The project has completed its foundational components, dependency system, and SQL execution engine foundation with PostgreSQL support. Current focus areas:
+The project has completed its foundational SQL execution engine with PostgreSQL support. Current focus areas:
 
-1. **PostgreSQL Integration Enhancement**: Adding comprehensive integration tests with test containers and improving error handling
-2. **Execution Engine Robustness**: Adding transaction management, rollback capabilities, and comprehensive logging
-3. **Model Execution Orchestration**: Enhancing the execution engine integration with dependency graph
+1. **Integration Testing Enhancement**: Adding comprehensive integration tests with test containers
+2. **Transaction Management**: Adding rollback capabilities and transaction handling
+3. **Terminal UI Development**: Beginning implementation of the interactive terminal interface
 4. **SQL Parsing Enhancements**: Improving table reference extraction and support for complex SQL constructs
-5. **Terminal UI Development**: Beginning implementation of the interactive terminal interface
-6. **Multi-Database Support (Future)**: Databricks and Snowflake adapters will be implemented after core features are stable
+5. **Multi-Database Support (Future)**: Databricks and Snowflake adapters will be implemented after core features are stable
 
 ## Recent Changes
 - ✅ Completed SQL parser implementation with working metadata extraction
@@ -19,14 +18,15 @@ The project has completed its foundational components, dependency system, and SQ
 - ✅ Built DependencyGraph with cycle detection and topological sorting
 - ✅ Added execution order planning and dependency analysis methods
 - ✅ Integrated dependency graph into ModelCatalog with comprehensive testing
-- ✅ Implemented SQL execution engine foundation with async trait-based architecture
-- ✅ Built PostgreSQL adapter with connection management and SQL execution
+- ✅ Implemented complete SQL execution engine with async trait-based architecture
+- ✅ Built fully functional PostgreSQL adapter with comprehensive connection management
 - ✅ Added execution result tracking, status reporting, and connection validation
 - ✅ Created optional feature flags for database adapters (postgres, databricks, snowflake)
 - ✅ Added async-trait dependency and tokio-postgres for PostgreSQL support
+- ✅ Implemented CLI run command with upstream/downstream dependencies, dry-run mode, fail-fast
 
 ## Next Steps
-1. **Enhance PostgreSQL Integration**
+1. **Integration Testing Enhancement**
    - Add comprehensive integration tests with test containers
    - Improve error handling and error messages in model execution
    - Add transaction management and rollback capabilities
@@ -57,8 +57,8 @@ The project has completed its foundational components, dependency system, and SQ
 
 ## Active Decisions and Considerations
 
-### SQL Execution Architecture (Implemented Foundation)
-- ✅ Multi-database support foundation: Postgres (implemented), Databricks (placeholder), Snowflake (placeholder)
+### SQL Execution Architecture (Largely Complete)
+- ✅ Multi-database support foundation: Postgres (fully implemented), Databricks (placeholder), Snowflake (placeholder)
 - ✅ Platform-specific adapters using async trait-based architecture
 - ✅ Connection management with connection string validation
 - ✅ Execution result tracking with status, timing, and error reporting
@@ -66,6 +66,7 @@ The project has completed its foundational components, dependency system, and SQ
 - ✅ Model execution orchestration using dependency graph
 - ✅ Upstream/downstream model selection for targeted execution
 - ✅ Dry-run mode for execution planning and validation
+- ✅ CLI run command with comprehensive execution options
 - 🔲 Comprehensive integration tests with test containers
 - 🔲 Transaction management for rollback capabilities
 - 🔲 Comprehensive execution logging and monitoring

@@ -11,7 +11,7 @@
 1. **tree-sitter**: Incremental parsing library
    - Purpose: Parse SQL queries into abstract syntax trees
    - Version: 0.25.3
-   - Custom SQL grammar: tree-sitter-sql-cadac (v0.1.5)
+   - Custom SQL grammar: tree-sitter-sql-cadac (v0.1.7)
    - Repository: https://github.com/janhoon/tree-sitter-sql
 
 2. **petgraph**: Graph data structure library

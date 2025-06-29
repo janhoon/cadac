@@ -75,16 +75,17 @@ CADAC is in early development (version 0.1.0) with completed foundational compon
 - 🔲 Metadata search capabilities
 - 🔲 Export functionality
 
-### SQL Execution Engine (In Progress)
-- ✅ SQL execution engine foundation with platform-specific adapters
-- ✅ PostgreSQL adapter with connection management and SQL execution
-- ✅ Execution result tracking and status reporting
+### SQL Execution Engine (Largely Complete ✅)
+- ✅ SQL execution engine with platform-specific adapters
+- ✅ PostgreSQL adapter with full connection management
+- ✅ Execution result tracking and comprehensive status reporting
 - ✅ Connection string validation for PostgreSQL
 - ✅ Async trait-based architecture for database adapters
 - ✅ Model execution orchestration in dependency order
 - ✅ Upstream/downstream model selection and execution
 - ✅ Dry-run mode for execution planning
-- 🔲 Comprehensive integration tests with test containers
+- ✅ CLI run command with comprehensive options
+- 🔲 Integration tests with test containers (next priority)
 - 🔲 Transaction management and rollback capabilities
 - 🔲 Enhanced error handling for failed model executions
 - 🔲 Comprehensive execution logging and monitoring
@@ -92,7 +93,7 @@ CADAC is in early development (version 0.1.0) with completed foundational compon
 - 🔲 Snowflake adapter implementation (future phase)
 
 ### CLI Commands
-- 🔲 Command to run models (with upstream/downstream options) - foundation ready
+- ✅ Command to run models with upstream/downstream dependencies, dry-run mode, fail-fast
 - 🔲 Command to generate documentation
 - 🔲 Command to query the catalog
 - 🔲 Command to export catalog data
@@ -133,12 +134,12 @@ CADAC is in early development (version 0.1.0) with completed foundational compon
 - ✅ Core data structures
 - ✅ Model discovery framework
 
-### Milestone 2: Core Functionality (Current)
+### Milestone 2: Core Functionality (Largely Complete)
 - ✅ Complete SQL parser with metadata extraction
 - ✅ Model discovery with dependency tracking
-- ✅ SQL execution engine foundation with PostgreSQL adapter
-- ✅ CLI commands for model execution (basic implementation)
-- 🔲 Comprehensive PostgreSQL integration with test containers
+- ✅ SQL execution engine with PostgreSQL adapter
+- ✅ CLI commands for model execution (comprehensive implementation)
+- 🔲 Integration tests with test containers
 - 🔲 Transaction management and rollback capabilities
 - 🔲 Enhanced error handling and logging
 - 🔲 Basic terminal UI
