@@ -1,7 +1,7 @@
 # Progress: CADAC
 
 ## Current Status
-CADAC is in early development (version 0.1.0) with completed foundational components, dependency system, and functional SQL execution framework. The project has successfully implemented SQL parsing with tree-sitter, model discovery functionality, dependency tracking using petgraph, and a complete SQL execution engine with PostgreSQL adapter. The CLI `run` command is fully functional for PostgreSQL model execution with dependency resolution. All tests are passing (16 tests). The focus is now on enhancing the PostgreSQL integration with comprehensive testing, transaction management, and improved error handling before expanding to additional database platforms.
+CADAC is in early development (version 0.1.0) with completed foundational components, dependency system, and functional SQL execution framework. The project has successfully implemented SQL parsing with tree-sitter, model discovery functionality, dependency tracking using petgraph, and a complete SQL execution engine with PostgreSQL adapter. The CLI `run` command is fully functional for PostgreSQL model execution with dependency resolution. All tests are passing (29 tests including 11 comprehensive integration tests). The focus is now shifting toward data model management capabilities, implementing table refresh and incremental update strategies to abstract users from manual SQL table management.
 
 ## What Works
 
@@ -75,7 +75,7 @@ CADAC is in early development (version 0.1.0) with completed foundational compon
 - 🔲 Metadata search capabilities
 - 🔲 Export functionality
 
-### SQL Execution Engine (Largely Complete ✅)
+### SQL Execution Engine (Completed ✅)
 - ✅ SQL execution engine with platform-specific adapters
 - ✅ PostgreSQL adapter with full connection management
 - ✅ Execution result tracking and comprehensive status reporting
@@ -85,12 +85,22 @@ CADAC is in early development (version 0.1.0) with completed foundational compon
 - ✅ Upstream/downstream model selection and execution
 - ✅ Dry-run mode for execution planning
 - ✅ CLI run command with comprehensive options
-- 🔲 Integration tests with test containers (next priority)
-- 🔲 Transaction management and rollback capabilities
-- 🔲 Enhanced error handling for failed model executions
-- 🔲 Comprehensive execution logging and monitoring
+- ✅ Comprehensive integration tests with test containers (11 scenarios)
+- ✅ Transaction management and rollback capabilities
+- ✅ Enhanced error handling with PostgreSQL error categorization
+- ✅ Comprehensive execution logging and monitoring with query hashing
+- ✅ Graceful fallback handling for Docker container failures
 - 🔲 Databricks adapter implementation (future phase)
 - 🔲 Snowflake adapter implementation (future phase)
+
+### Data Model Management (NEW PRIORITY)
+- 🔲 Model materialization strategies and execution modes
+- 🔲 Full table refresh via CREATE TABLE AS SELECT
+- 🔲 Incremental update patterns and change detection
+- 🔲 Model configuration system for execution preferences
+- 🔲 User abstraction from raw SQL table management
+- 🔲 Model versioning and dependency-aware refresh
+- 🔲 Integration with existing execution engine and dependency system
 
 ### CLI Commands
 - ✅ Command to run models with upstream/downstream dependencies, dry-run mode, fail-fast
@@ -134,15 +144,23 @@ CADAC is in early development (version 0.1.0) with completed foundational compon
 - ✅ Core data structures
 - ✅ Model discovery framework
 
-### Milestone 2: Core Functionality (Largely Complete)
+### Milestone 2: Core Functionality (Completed ✅)
 - ✅ Complete SQL parser with metadata extraction
 - ✅ Model discovery with dependency tracking
 - ✅ SQL execution engine with PostgreSQL adapter
 - ✅ CLI commands for model execution (comprehensive implementation)
-- 🔲 Integration tests with test containers
-- 🔲 Transaction management and rollback capabilities
-- 🔲 Enhanced error handling and logging
+- ✅ Comprehensive integration tests with test containers (11 scenarios)
+- ✅ Transaction management and rollback capabilities
+- ✅ Enhanced error handling and logging with PostgreSQL categorization
 - 🔲 Basic terminal UI
+
+### Milestone 2.5: Data Model Management (NEW)
+- 🔲 Model materialization framework
+- 🔲 Full refresh execution mode (CREATE TABLE AS)
+- 🔲 Incremental update execution mode
+- 🔲 Model execution strategy configuration
+- 🔲 User abstraction from SQL table commands
+- 🔲 Model change detection and versioning
 
 ### Milestone 3: Enhanced Features
 - 🔲 Advanced terminal UI with model browsing

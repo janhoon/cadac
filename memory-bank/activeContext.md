@@ -1,10 +1,10 @@
 # Active Context: CADAC
 
 ## Current Work Focus
-The project has completed its foundational SQL execution engine with PostgreSQL support. Current focus areas:
+The project has completed its foundational SQL execution engine with PostgreSQL support and comprehensive integration testing. Current focus areas:
 
-1. **Integration Testing Enhancement**: Adding comprehensive integration tests with test containers
-2. **Transaction Management**: Adding rollback capabilities and transaction handling
+1. **Data Model Management System**: Implementing table refresh and incremental update capabilities for data models
+2. **Model Execution Modes**: Building full refresh (CREATE TABLE AS) and incremental update strategies
 3. **Terminal UI Development**: Beginning implementation of the interactive terminal interface
 4. **SQL Parsing Enhancements**: Improving table reference extraction and support for complex SQL constructs
 5. **Multi-Database Support (Future)**: Databricks and Snowflake adapters will be implemented after core features are stable
@@ -12,7 +12,7 @@ The project has completed its foundational SQL execution engine with PostgreSQL 
 ## Recent Changes
 - ✅ Completed SQL parser implementation with working metadata extraction
 - ✅ Finished model discovery functionality with comprehensive testing
-- ✅ All tests are now passing for parser and discovery components (16 tests total)
+- ✅ All tests are now passing for parser and discovery components (29 tests total)
 - ✅ Implemented complete dependency system with petgraph integration
 - ✅ Created ModelIdentity structure for schema-based organization
 - ✅ Built DependencyGraph with cycle detection and topological sorting
@@ -24,32 +24,46 @@ The project has completed its foundational SQL execution engine with PostgreSQL 
 - ✅ Created optional feature flags for database adapters (postgres, databricks, snowflake)
 - ✅ Added async-trait dependency and tokio-postgres for PostgreSQL support
 - ✅ Implemented CLI run command with upstream/downstream dependencies, dry-run mode, fail-fast
+- ✅ **COMPLETED: Comprehensive Integration Testing Enhancement**
+  - Added 11 comprehensive integration test scenarios with test containers
+  - Implemented transaction management and rollback capabilities
+  - Enhanced error handling with PostgreSQL error categorization
+  - Added execution metadata tracking (query hashing, timing, started_at)
+  - Created graceful fallback handling for Docker container failures
+  - Implemented comprehensive data transformation workflow testing (Bronze/Silver/Gold layers)
 
 ## Next Steps
-1. **Integration Testing Enhancement**
-   - Add comprehensive integration tests with test containers
-   - Improve error handling and error messages in model execution
-   - Add transaction management and rollback capabilities
-   - Implement comprehensive execution logging and monitoring
+1. **Data Model Management System (NEW PRIORITY)**
+   - Implement table refresh modes: full refresh via CREATE TABLE AS
+   - Add incremental update capabilities for data models
+   - Abstract users from manual CREATE TABLE SQL commands
+   - Build model execution strategies based on model configuration
+   - Implement model materialization patterns (tables vs views)
 
-2. **SQL Parsing Enhancements**
+2. **Model Execution Strategies**
+   - Full refresh: DROP + CREATE TABLE AS SELECT pattern
+   - Incremental updates: INSERT/UPDATE/DELETE based on change detection
+   - Model dependency handling during refresh operations
+   - Transaction management for model updates
+
+3. **SQL Parsing Enhancements**
    - Enhance table reference extraction for dependency tracking
    - Support for complex SQL constructs (joins, CTEs, subqueries)
    - Improved handling of qualified column references
    - Better alias handling in dependency resolution
 
-3. **Smart Reference Resolution**
+4. **Smart Reference Resolution**
    - Build intelligent qualified vs unqualified table name resolution
    - Implement context-aware dependency matching based on current model's schema
    - Handle database-qualified references as external tables
 
-4. **Terminal UI Development**
+5. **Terminal UI Development**
    - Begin implementation of multi-view interface with ratatui
    - Create model browser view
    - Implement model detail view
    - Add dependency graph visualization
 
-5. **Multi-Database Support (Future Phase)**
+6. **Multi-Database Support (Future Phase)**
    - Implement Databricks adapter with proper SQL connector
    - Implement Snowflake adapter with proper SQL connector
    - Add comprehensive testing for all database adapters
@@ -57,7 +71,7 @@ The project has completed its foundational SQL execution engine with PostgreSQL 
 
 ## Active Decisions and Considerations
 
-### SQL Execution Architecture (Largely Complete)
+### SQL Execution Architecture (Completed ✅)
 - ✅ Multi-database support foundation: Postgres (fully implemented), Databricks (placeholder), Snowflake (placeholder)
 - ✅ Platform-specific adapters using async trait-based architecture
 - ✅ Connection management with connection string validation
@@ -67,10 +81,19 @@ The project has completed its foundational SQL execution engine with PostgreSQL 
 - ✅ Upstream/downstream model selection for targeted execution
 - ✅ Dry-run mode for execution planning and validation
 - ✅ CLI run command with comprehensive execution options
-- 🔲 Comprehensive integration tests with test containers
-- 🔲 Transaction management for rollback capabilities
-- 🔲 Comprehensive execution logging and monitoring
-- 🔲 Enhanced error handling and recovery
+- ✅ Comprehensive integration tests with test containers (11 test scenarios)
+- ✅ Transaction management for rollback capabilities
+- ✅ Comprehensive execution logging and monitoring
+- ✅ Enhanced error handling and recovery with PostgreSQL error categorization
+
+### Data Model Management Architecture (NEW FOCUS)
+- 🔲 Model materialization strategies (full refresh vs incremental)
+- 🔲 Table refresh via CREATE TABLE AS SELECT patterns
+- 🔲 Incremental update detection and execution
+- 🔲 Model configuration for execution modes
+- 🔲 Abstraction layer over raw SQL commands for users
+- 🔲 Model versioning and change detection
+- 🔲 Dependency-aware model refresh orchestration
 
 ### Dependency System Architecture
 - Using petgraph library for robust graph algorithms (cycle detection, topological sort)

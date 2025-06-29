@@ -1,6 +1,6 @@
 use color_eyre::Result;
 use std::collections::HashMap;
-use std::time::Duration;
+use std::time::{Duration, SystemTime};
 
 /// Represents the result of executing a SQL statement
 #[derive(Debug, Clone)]
@@ -9,6 +9,41 @@ pub struct ExecutionResult {
     pub execution_time: Duration,
     pub status: ExecutionStatus,
     pub message: Option<String>,
+    pub started_at: SystemTime,
+    pub query_hash: Option<String>,
+}
+
+impl ExecutionResult {
+    pub fn new(status: ExecutionStatus) -> Self {
+        Self {
+            rows_affected: 0,
+            execution_time: Duration::from_millis(0),
+            status,
+            message: None,
+            started_at: SystemTime::now(),
+            query_hash: None,
+        }
+    }
+
+    pub fn with_message(mut self, message: String) -> Self {
+        self.message = Some(message);
+        self
+    }
+
+    pub fn with_rows_affected(mut self, rows: u64) -> Self {
+        self.rows_affected = rows;
+        self
+    }
+
+    pub fn with_execution_time(mut self, duration: Duration) -> Self {
+        self.execution_time = duration;
+        self
+    }
+
+    pub fn with_query_hash(mut self, hash: String) -> Self {
+        self.query_hash = Some(hash);
+        self
+    }
 }
 
 /// Status of SQL execution

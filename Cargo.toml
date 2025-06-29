@@ -18,10 +18,11 @@ async-trait = "0.1.83"
 tokio-postgres = { version = "0.7.12", optional = true }
 tokio = { version = "1.0", features = ["full"], optional = true }
 testcontainers-modules = { version = "0.12.1", features = ["postgres"], optional = true }
+md5 = { version = "0.7", optional = true }
 
 [features]
 default = []
-postgres = ["tokio-postgres", "tokio", "testcontainers-modules"]
+postgres = ["tokio-postgres", "tokio", "testcontainers-modules", "md5"]
 databricks = []  # Will add databricks-specific deps later
 snowflake = []   # Will add snowflake-specific deps later
 all-databases = ["postgres", "databricks", "snowflake"]
